@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-barbercloud-dev-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-barberlab-dev-change-in-production')
 
 # Chave Fernet para criptografar CPF e dados sensíveis (32 bytes, base64 URL-safe)
 # Gere uma nova com: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
@@ -94,7 +94,7 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BarberCloud <noreply@barbercloud.com.br>')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'BarberLab <noreply@barberlab.com.br>')
 
 # Senha do painel de desenvolvedor — troque por algo secreto antes de ir a produção
 DEV_ADMIN_SECRET = os.environ.get('DEV_ADMIN_SECRET', 'barberdev2025')

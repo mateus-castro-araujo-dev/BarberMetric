@@ -1,6 +1,6 @@
 {
-  "name": "BarberCloud",
-  "short_name": "BarberCloud",
+  "name": "BarberLab",
+  "short_name": "BarberLab",
   "description": "Sistema profissional para barbearias",
   "start_url": "/app/",
   "display": "standalone",

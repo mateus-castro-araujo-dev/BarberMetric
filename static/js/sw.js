@@ -1,4 +1,4 @@
-const CACHE = 'barbercloud-v1';
+const CACHE = 'barberlab-v1';
 const ASSETS = ['/app/', '/static/css/style.css', '/static/js/main.js'];
 
 self.addEventListener('install', e => {

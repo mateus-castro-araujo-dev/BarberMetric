@@ -83,13 +83,13 @@ def _enviar_email_verificacao(request, barbearia):
     link = request.build_absolute_uri(f'/verificar-email/{token}/')
     try:
         send_mail(
-            subject='BarberCloud — Confirme seu e-mail',
+            subject='BarberLab — Confirme seu e-mail',
             message=(
                 f'Olá, {barbearia.user.first_name}!\n\n'
                 f'Clique no link abaixo para confirmar seu e-mail e ativar sua conta:\n\n'
                 f'{link}\n\n'
                 f'O link expira em 48 horas.\n\n'
-                f'Equipe BarberCloud'
+                f'Equipe BarberLab'
             ),
             from_email=django_settings.DEFAULT_FROM_EMAIL,
             recipient_list=[barbearia.user.email],
@@ -119,7 +119,7 @@ def verificar_email(request, token):
     barbearia.token_expira = None
     barbearia.save()
 
-    messages.success(request, 'E-mail verificado com sucesso! Bem-vindo ao BarberCloud.')
+    messages.success(request, 'E-mail verificado com sucesso! Bem-vindo ao BarberLab.')
     return redirect('home')
 
 
@@ -197,7 +197,7 @@ def _enviar_email_reset_senha(request, barbearia):
     link = request.build_absolute_uri(f'/redefinir-senha/{token}/')
     try:
         send_mail(
-            subject='BarberCloud — Redefinição de senha',
+            subject='BarberLab — Redefinição de senha',
             message=(
                 f'Olá, {barbearia.user.first_name}!\n\n'
                 f'Recebemos uma solicitação para redefinir a senha da sua conta.\n\n'
@@ -205,7 +205,7 @@ def _enviar_email_reset_senha(request, barbearia):
                 f'{link}\n\n'
                 f'Este link expira em 2 horas.\n\n'
                 f'Se você não solicitou isso, ignore este e-mail.\n\n'
-                f'Equipe BarberCloud'
+                f'Equipe BarberLab'
             ),
             from_email=django_settings.DEFAULT_FROM_EMAIL,
             recipient_list=[barbearia.user.email],
@@ -307,12 +307,12 @@ def gerar_pagamento_pix(request):
 
     payload = {
         'transaction_amount': valor,
-        'description': f'BarberCloud — Assinatura Mensal — {barbearia.nome}',
+        'description': f'BarberLab — Assinatura Mensal — {barbearia.nome}',
         'payment_method_id': 'pix',
         'payer': {
             'email': barbearia.user.email,
             'first_name': barbearia.user.first_name or 'Cliente',
-            'last_name': barbearia.user.last_name or 'BarberCloud',
+            'last_name': barbearia.user.last_name or 'BarberLab',
         },
         'notification_url': request.build_absolute_uri('/pagamento/webhook-mp/'),
         'external_reference': str(barbearia.pk),
@@ -322,7 +322,7 @@ def gerar_pagamento_pix(request):
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json',
-        'X-Idempotency-Key': f'barbercloud-{barbearia.pk}-{int(timezone.now().timestamp())}',
+        'X-Idempotency-Key': f'barberlab-{barbearia.pk}-{int(timezone.now().timestamp())}',
     }
 
     try:

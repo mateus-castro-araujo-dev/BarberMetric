@@ -1,4 +1,4 @@
-// BarberCloud — main.js
+// BarberLab — main.js
 
 (function () {
   'use strict';

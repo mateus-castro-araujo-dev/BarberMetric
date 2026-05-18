@@ -1,0 +1,29 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('registrar-venda/', views.registrar_venda, name='registrar_venda'),
+    path('registrar-produto/', views.registrar_produto, name='registrar_produto'),
+    path('relatorios/', views.relatorios, name='relatorios'),
+    path('graficos/', views.graficos, name='graficos'),
+    path('excluir/<int:pk>/', views.excluir_atendimento, name='excluir_atendimento'),
+    path('excluir-produto/<int:pk>/', views.excluir_venda_produto, name='excluir_venda_produto'),
+    path('clientes/', views.lista_clientes, name='lista_clientes'),
+    path('clientes/<int:pk>/', views.perfil_cliente, name='perfil_cliente'),
+    path('clientes/<int:pk>/editar/', views.editar_cliente, name='editar_cliente'),
+    path('clientes/<int:pk>/excluir/', views.excluir_cliente, name='excluir_cliente'),
+    path('clientes/exportar/', views.exportar_csv, name='exportar_csv'),
+    path('barbeiros/', views.barbeiros, name='barbeiros'),
+    path('barbeiros/adicionar/', views.adicionar_barbeiro, name='adicionar_barbeiro'),
+    path('barbeiros/excluir/<int:pk>/', views.excluir_barbeiro, name='excluir_barbeiro'),
+    path('barbeiros/trocar/<int:pk>/', views.trocar_barbeiro, name='trocar_barbeiro'),
+    path('barbeiros/trocar/todos/', views.trocar_para_todos, name='trocar_para_todos'),
+    path('servicos/', views.servicos, name='servicos'),
+    path('produtos/', views.produtos_view, name='produtos'),
+    path('fila/', views.fila, name='fila'),
+    path('fila/salvar/', views.salvar_fila_ajax, name='salvar_fila'),
+    path('fila/toggle/', views.toggle_aberto, name='toggle_aberto'),
+    path('fila/toggle-horarios/', views.toggle_mostrar_horarios, name='toggle_mostrar_horarios'),
+    path('fila/horarios/', views.salvar_horarios, name='salvar_horarios'),
+]

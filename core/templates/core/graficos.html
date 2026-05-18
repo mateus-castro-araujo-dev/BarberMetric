@@ -1,0 +1,144 @@
+{% extends 'core/base.html' %}
+{% block title %}Gráficos — BarberCloud{% endblock %}
+{% block page_title %}Gráficos{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Análise mensal: <strong>{{ ano_atual }}</strong></span>
+  </div>
+  <h1 class="live-title">
+    Performance do Mês
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='trending' %}</span>
+  </h1>
+</div>
+
+<div class="filter-bar">
+  <form method="GET" class="date-filter" style="gap:.75rem">
+    <select name="mes" class="form-input compact" style="width:130px" onchange="this.form.submit()">
+      <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
+      <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
+      <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
+      <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril</option>
+      <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio</option>
+      <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho</option>
+      <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho</option>
+      <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto</option>
+      <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro</option>
+      <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+      <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+      <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+    </select>
+    <input type="number" name="ano" value="{{ ano_atual }}" min="2020" max="2030" class="form-input compact" style="width:130px" onchange="this.form.submit()">
+    <button type="submit" class="btn-outline">Ver</button>
+  </form>
+</div>
+
+<div class="crypto-cards">
+  <div class="crypto-card c-orange">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-orange">{% include 'core/_icon.html' with name='wallet' %}</div>
+        <div>
+          <div class="cc-pair">BRL/MÊS</div>
+          <div class="cc-name">Faturamento</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Total do Mês</div>
+    <div class="cc-value">R$ {{ total_mes|floatformat:2 }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Consolidado
+    </span>
+  </div>
+
+  <div class="crypto-card c-green">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-green">{% include 'core/_icon.html' with name='trophy' %}</div>
+        <div>
+          <div class="cc-pair">DESTAQUE</div>
+          <div class="cc-name">Melhor Dia</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Dia de pico</div>
+    <div class="cc-value">Dia {{ melhor_dia }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='star' %}</span>
+      Top performer
+    </span>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='chart-bar' %} Faturamento Diário</h2></div>
+  <div class="chart-container" style="height:300px">
+    <canvas id="fat-chart"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='scissors' %} Atendimentos por Dia</h2></div>
+  <div class="chart-container" style="height:220px">
+    <canvas id="cortes-chart"></canvas>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const baseScales = {
+  x: { grid: { color: '#1F1F2E' }, ticks: { color: '#9CA3AF', font: { family: 'Outfit', size: 11 } } },
+  y: { grid: { color: '#1F1F2E' }, ticks: { color: '#9CA3AF', font: { family: 'Outfit', size: 11 } }, beginAtZero: true }
+};
+
+new Chart(document.getElementById('fat-chart'), {
+  type: 'bar',
+  data: {
+    labels: {{ labels|safe }},
+    datasets: [{
+      data: {{ valores|safe }},
+      backgroundColor: 'rgba(245,158,11,0.3)',
+      borderColor: '#F59E0B',
+      borderWidth: 2,
+      borderRadius: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { ...baseScales, y: { ...baseScales.y, ticks: { ...baseScales.y.ticks, callback: v => 'R$' + v } } }
+  }
+});
+
+new Chart(document.getElementById('cortes-chart'), {
+  type: 'line',
+  data: {
+    labels: {{ labels|safe }},
+    datasets: [{
+      data: {{ cortes|safe }},
+      borderColor: '#6366F1',
+      backgroundColor: 'rgba(99,102,241,0.12)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#6366F1',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 3,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: baseScales }
+});
+</script>
+{% endblock %}

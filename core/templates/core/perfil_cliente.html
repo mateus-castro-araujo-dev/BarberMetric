@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ cliente.nome }} — BarberCloud{% endblock %}
+{% block page_title %}Perfil do Cliente{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Cliente desde: <strong>{{ cliente.data_cadastro|date:"M Y"|default:"sempre" }}</strong></span>
+  </div>
+  <h1 class="live-title">
+    {{ cliente.nome }}
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='user' %}</span>
+  </h1>
+</div>
+
+<div class="perfil-header">
+  <div class="perfil-avatar">{{ cliente.nome|first|upper }}</div>
+  <div class="perfil-info">
+    <h2>{{ cliente.nome }}</h2>
+    <p>{{ cliente.telefone|default:"Sem telefone" }}</p>
+    {% if dias_sem_visita is not None %}
+    <span class="pct-pill {% if dias_sem_visita > 30 %}down{% else %}up{% endif %}">
+      Última visita há {{ dias_sem_visita }} dia{{ dias_sem_visita|pluralize }}
+    </span>
+    {% endif %}
+  </div>
+  <div class="perfil-actions">
+    <a href="{% url 'editar_cliente' cliente.pk %}" class="btn-outline">{% include 'core/_icon.html' with name='edit' %} Editar</a>
+    <a href="{% url 'excluir_cliente' cliente.pk %}" class="btn-outline danger">{% include 'core/_icon.html' with name='trash' %}</a>
+  </div>
+</div>
+
+<div class="crypto-cards">
+  <div class="crypto-card c-orange">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-orange">{% include 'core/_icon.html' with name='wallet' %}</div>
+        <div>
+          <div class="cc-pair">BRL/TOTAL</div>
+          <div class="cc-name">Faturado</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Total Gasto</div>
+    <div class="cc-value">R$ {{ total_gasto|floatformat:2 }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Histórico
+    </span>
+  </div>
+
+  <div class="crypto-card c-indigo">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-indigo">{% include 'core/_icon.html' with name='chair' %}</div>
+        <div>
+          <div class="cc-pair">VISITAS/TOTAL</div>
+          <div class="cc-name">Frequência</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Total de Visitas</div>
+    <div class="cc-value">{{ total_visitas }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='check' %}</span>
+      Recorrente
+    </span>
+  </div>
+
+  <div class="crypto-card c-green">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-green">{% include 'core/_icon.html' with name='target' %}</div>
+        <div>
+          <div class="cc-pair">TICKET/MÉDIO</div>
+          <div class="cc-name">Por visita</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Ticket Médio</div>
+    <div class="cc-value">R$ {{ ticket_medio|floatformat:2 }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Estável
+    </span>
+  </div>
+
+  {% if servico_favorito %}
+  <div class="crypto-card c-red">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-red">{% include 'core/_icon.html' with name='star' %}</div>
+        <div>
+          <div class="cc-pair">PREFERÊNCIA</div>
+          <div class="cc-name">Favorito</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Serviço Favorito</div>
+    <div class="cc-value" style="font-size:1.2rem">{{ servico_favorito }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='star' %}</span>
+      Mais escolhido
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+{% if atendimentos %}
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='clock' %} Histórico completo</div>
+      <div class="overview-title">Serviços Realizados</div>
+    </div>
+
+  </div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Nº</th><th>Data</th><th>Serviços</th><th>Pagamento</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for a in atendimentos %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td>{{ a.data|date:"d/m/Y H:i" }}</td>
+            <td>{{ a.servicos_prestados }}</td>
+            <td><span class="badge-pag {{ a.forma_pagamento|lower }}">{{ a.forma_pagamento }}</span></td>
+            <td class="valor-cell">R$ {{ a.valor_total|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if vendas %}
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='shopping' %} Compras</div>
+      <div class="overview-title">Produtos Comprados</div>
+    </div>
+
+  </div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Nº</th><th>Data</th><th>Produto</th><th>Qtd</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for v in vendas %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td>{{ v.data|date:"d/m/Y" }}</td>
+            <td>{{ v.produto.nome|default:"—" }}</td>
+            <td>{{ v.quantidade }}</td>
+            <td class="valor-cell">R$ {{ v.valor_total|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div style="margin-top:1.5rem">
+  <a href="{% url 'lista_clientes' %}" class="btn-outline">{% include 'core/_icon.html' with name='arrow-left' %} Voltar</a>
+</div>
+
+{% endblock %}

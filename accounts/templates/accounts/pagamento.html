@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Assinar BarberCloud — R$20/mês</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:2rem 1rem 3rem;background:var(--bg-page)}
+    body::before,body::after,.bg-glow,.sidebar,.sidebar-overlay,.mobile-nav,.topbar{display:none!important}
+    .pay-wrap{width:100%;max-width:520px;animation:slideIn .4s var(--ease) both}
+
+    /* Logo */
+    .pay-logo{text-align:center;margin-bottom:2rem}
+    .pay-logo-inner{display:inline-flex;align-items:center;gap:.7rem}
+    .pay-logo-pole{width:24px;height:38px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(255,255,255,.12);position:relative;flex-shrink:0}
+    .pay-logo-pole::before{content:'';position:absolute;top:-30px;bottom:-30px;left:-3px;right:-3px;background:repeating-linear-gradient(-45deg,#DC2626 0,#DC2626 5px,#fff 5px,#fff 10px,#6366F1 10px,#6366F1 15px);animation:pay-pole 1.2s linear infinite}
+    @keyframes pay-pole{from{transform:translateY(0)}to{transform:translateY(21.213px)}}
+    .pay-logo h1{font-size:1.65rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 30%,#C8C8F4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .pay-logo-sub{font-size:.75rem;color:var(--text-dim);font-weight:500;margin-top:.15rem}
+
+    /* Banner expirado */
+    .expired-banner{
+      background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.22);
+      border-radius:var(--r);padding:1.25rem 1.4rem;text-align:center;margin-bottom:1.5rem;
+    }
+    .expired-icon{font-size:2rem;display:block;margin-bottom:.5rem}
+    .expired-banner h2{font-size:1.1rem;font-weight:700;color:#fca5a5;margin-bottom:.3rem}
+    .expired-banner p{color:var(--text-dim);font-size:.88rem;line-height:1.5}
+
+    /* Plano card */
+    .plano-card{
+      background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.06));
+      border:1.5px solid rgba(99,102,241,.3);
+      border-radius:var(--r);padding:1.6rem 1.5rem;text-align:center;
+      margin-bottom:1.5rem;position:relative;overflow:hidden;
+    }
+    .plano-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,#6366F1,#8B5CF6,#DC2626);
+    }
+    .plano-badge{
+      display:inline-flex;align-items:center;gap:.3rem;
+      font-size:.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+      background:rgba(99,102,241,.2);color:#A5B4FC;
+      padding:.28rem .7rem;border-radius:999px;margin-bottom:.9rem;
+    }
+    .plano-preco{font-size:3.2rem;font-weight:800;color:var(--text);letter-spacing:-2px;line-height:1}
+    .plano-preco span{font-size:1rem;font-weight:400;color:var(--text-dim);letter-spacing:0}
+    .plano-desc{color:var(--text-dim);font-size:.88rem;margin-top:.6rem;line-height:1.5}
+    .plano-features{
+      display:flex;flex-direction:column;gap:.4rem;
+      margin-top:1rem;text-align:left;
+    }
+    .plano-feature{
+      display:flex;align-items:center;gap:.55rem;
+      font-size:.85rem;color:var(--text-2);
+    }
+    .plano-feature::before{content:'✓';color:#4ADE80;font-weight:800;font-size:.9rem;flex-shrink:0}
+
+    /* Seção MP */
+    .mp-section{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem;
+    }
+    .mp-header{
+      padding:1rem 1.25rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:.6rem;
+    }
+    .mp-header-icon{
+      width:34px;height:34px;border-radius:50%;
+      background:linear-gradient(135deg,#009EE3,#00B2FF);
+      display:flex;align-items:center;justify-content:center;
+      font-size:.9rem;font-weight:800;color:#fff;flex-shrink:0;
+    }
+    .mp-header h3{font-size:.95rem;font-weight:700;color:var(--text)}
+    .mp-header p{font-size:.75rem;color:var(--text-dim);margin-top:.1rem}
+    .mp-body{padding:1.25rem}
+
+    /* Botão gerar QR */
+    .btn-mp{
+      width:100%;padding:1.1rem;border-radius:var(--r);border:none;cursor:pointer;
+      font-family:var(--font);font-size:1rem;font-weight:800;
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      transition:all .2s var(--ease);
+      background:linear-gradient(135deg,#009EE3,#0070BB);
+      color:#fff;box-shadow:0 4px 20px rgba(0,158,227,.25);
+      min-height:54px;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-mp:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,158,227,.35)}
+    .btn-mp:active{transform:translateY(0)}
+    .btn-mp:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    /* QR code display */
+    .qr-container{display:none;flex-direction:column;align-items:center;gap:1rem}
+    .qr-container.visible{display:flex}
+    .qr-img-wrap{
+      background:#fff;border-radius:var(--r);padding:1rem;
+      box-shadow:0 4px 24px rgba(0,0,0,.3);
+    }
+    .qr-img-wrap img{width:180px;height:180px;display:block}
+    .qr-timer{
+      display:flex;align-items:center;gap:.4rem;
+      font-size:.8rem;color:var(--text-dim);
+    }
+    .qr-timer-dot{width:7px;height:7px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B981;animation:blink 2.4s infinite;flex-shrink:0}
+    .qr-instructions{font-size:.82rem;color:var(--text-dim);text-align:center;line-height:1.6}
+
+    /* Pix copia e cola */
+    .pix-copy-box{width:100%}
+    .pix-copy-label{font-size:.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem}
+    .pix-copy-row{display:flex;gap:.5rem;align-items:stretch}
+    .pix-code{
+      flex:1;background:var(--bg-input);border:1px solid var(--border);
+      border-radius:var(--r2);padding:.7rem 1rem;font-size:.75rem;
+      font-family:'SFMono-Regular',Consolas,monospace;color:var(--indigo);
+      word-break:break-all;line-height:1.4;min-height:54px;
+      display:flex;align-items:center;
+    }
+    .btn-copy{
+      background:var(--bg-card-2);border:1px solid var(--border);
+      border-radius:var(--r2);padding:.7rem 1rem;cursor:pointer;
+      font-size:.82rem;font-weight:700;color:var(--text-dim);
+      white-space:nowrap;transition:all .18s var(--ease);font-family:var(--font);
+      display:flex;align-items:center;gap:.35rem;flex-shrink:0;
+    }
+    .btn-copy:hover{border-color:var(--border-2);color:var(--text)}
+    .btn-copy.copied{border-color:rgba(16,185,129,.4);color:#4ADE80;background:rgba(16,185,129,.08)}
+
+    /* Status aprovado */
+    .status-aprovado{
+      display:none;flex-direction:column;align-items:center;gap:.75rem;
+      background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+      border-radius:var(--r);padding:1.5rem;text-align:center;
+    }
+    .status-aprovado.visible{display:flex}
+    .status-aprovado-icon{font-size:2.5rem}
+    .status-aprovado h3{font-size:1.1rem;font-weight:800;color:#4ADE80}
+    .status-aprovado p{font-size:.88rem;color:var(--text-dim)}
+
+    /* Não configurado */
+    .mp-nao-config{
+      background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);
+      border-radius:var(--r2);padding:1rem 1.15rem;font-size:.85rem;
+      color:var(--text-dim);line-height:1.5;
+    }
+    .mp-nao-config strong{color:var(--amber)}
+
+    /* Solicitação manual */
+    .manual-section{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem;
+    }
+    .manual-header{padding:.85rem 1.25rem;border-bottom:1px solid var(--border)}
+    .manual-header h3{font-size:.9rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem}
+    .manual-body{padding:1.1rem 1.25rem}
+    .form-label-pay{display:block;font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem}
+    .form-textarea{
+      width:100%;padding:.9rem 1rem;background:var(--bg-input);
+      border:1px solid var(--border);border-radius:var(--r2);
+      color:var(--text);font-size:.9rem;font-family:var(--font);
+      resize:vertical;min-height:80px;transition:border-color .2s var(--ease);
+    }
+    .form-textarea:focus{outline:none;border-color:var(--border-2)}
+    .form-textarea::placeholder{color:var(--text-ghost)}
+    .btn-solicitar{
+      width:100%;padding:1rem;background:var(--text);color:#0D0D14;
+      font-weight:800;font-size:.95rem;border:none;border-radius:var(--r2);
+      cursor:pointer;transition:all .2s var(--ease);font-family:var(--font);
+      margin-top:.75rem;min-height:52px;
+    }
+    .btn-solicitar:hover{background:#fff;box-shadow:0 6px 18px rgba(255,255,255,.12);transform:translateY(-1px)}
+
+    /* WhatsApp btn */
+    .btn-whats{
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      width:100%;padding:1rem;background:#25D366;color:#fff;
+      font-weight:700;font-size:.95rem;border:none;border-radius:var(--r2);
+      cursor:pointer;text-decoration:none;transition:all .2s var(--ease);font-family:var(--font);
+      margin-bottom:.75rem;min-height:52px;
+    }
+    .btn-whats:hover{background:#128C7E;transform:translateY(-1px)}
+
+    /* Alert success */
+    .alert-ok{
+      background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+      color:#4ADE80;padding:.9rem 1.1rem;border-radius:var(--r2);
+      margin-bottom:1.1rem;font-size:.88rem;font-weight:500;
+      display:flex;align-items:center;gap:.5rem;
+    }
+
+    /* Logout link */
+    .logout-link{text-align:center;margin-top:1.5rem}
+    .logout-link a{color:var(--text-dim);font-size:.84rem;text-decoration:none;transition:color .18s}
+    .logout-link a:hover{color:var(--text)}
+
+    @media(max-width:480px){
+      body{padding:1.25rem .85rem 2.5rem}
+      .plano-preco{font-size:2.6rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="pay-wrap">
+
+    <!-- Logo -->
+    <div class="pay-logo">
+      <div class="pay-logo-inner">
+        <div class="pay-logo-pole"></div>
+        <div>
+          <h1>BarberCloud</h1>
+          <div class="pay-logo-sub">Gestão Inteligente para Barbearias</div>
+        </div>
+      </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert-ok">✅ {{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="expired-banner">
+      <span class="expired-icon">🔒</span>
+      <h2>Período de teste encerrado</h2>
+      <p>Seu teste gratuito de 30 dias terminou. Assine para continuar usando o <strong>{{ barbearia.nome }}</strong>. Seus dados estão seguros e preservados.</p>
+    </div>
+
+    <!-- Card do plano -->
+    <div class="plano-card">
+      <div class="plano-badge">Plano Mensal</div>
+      <div class="plano-preco">R$20<span>/mês</span></div>
+      <div class="plano-desc">Acesso completo a todas as funcionalidades</div>
+      <div class="plano-features">
+        <div class="plano-feature">Registros ilimitados de atendimentos</div>
+        <div class="plano-feature">Gestão de clientes, barbeiros e serviços</div>
+        <div class="plano-feature">Relatórios e gráficos em tempo real</div>
+        <div class="plano-feature">Fila digital com página pública</div>
+        <div class="plano-feature">Suporte via WhatsApp</div>
+      </div>
+    </div>
+
+    <!-- Seção Mercado Pago -->
+    <div class="mp-section">
+      <div class="mp-header">
+        <div>
+          <h3>Pagar com PIX</h3>
+          <p>QR Code gerado na hora. Aprovação imediata.</p>
+        </div>
+      </div>
+      <div class="mp-body">
+
+        {% if mp_configurado %}
+
+        <!-- Status aprovado (oculto inicialmente) -->
+        <div class="status-aprovado" id="statusAprovado">
+          <div class="status-aprovado-icon">🎉</div>
+          <h3>Pagamento confirmado!</h3>
+          <p>Sua assinatura foi ativada. Redirecionando...</p>
+        </div>
+
+        <!-- Botão gerar QR -->
+        <button class="btn-mp" id="btnGerarQR" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h1v1h-1z M16 14h1v1h-1z M14 16h1v1h-1z M16 16h3v3h-3z"/></svg>
+          Gerar QR Code PIX — R$20
+        </button>
+
+        <!-- Container QR (oculto inicialmente) -->
+        <div class="qr-container" id="qrContainer" style="margin-top:1.25rem">
+          <div class="qr-img-wrap">
+            <img id="qrImg" src="" alt="QR Code PIX" width="180" height="180">
+          </div>
+          <div class="qr-timer">
+            <span class="qr-timer-dot"></span>
+            <span id="qrStatus">Aguardando pagamento...</span>
+          </div>
+          <p class="qr-instructions">
+            Abra o app do seu banco → PIX → Ler QR Code<br>
+            ou copie o código abaixo
+          </p>
+          <div class="pix-copy-box">
+            <div class="pix-copy-label">PIX Copia e Cola</div>
+            <div class="pix-copy-row">
+              <div class="pix-code" id="pixCode">—</div>
+              <button class="btn-copy" id="btnCopy" type="button">Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        {% else %}
+
+        <div class="mp-nao-config">
+          <strong>Configuração pendente</strong><br>
+          O Mercado Pago ainda não está configurado. Use o WhatsApp abaixo para pagar.
+        </div>
+
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- WhatsApp fallback -->
+    <a href="https://wa.me/5519999999999?text=Olá!%20Quero%20assinar%20o%20BarberCloud%20para%20{{ barbearia.nome|urlencode }}%20-%20R$20/mês" target="_blank" class="btn-whats">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.126 1.535 5.86L.057 23.966l6.233-1.633A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.001-1.364l-.359-.213-3.7.97.988-3.61-.233-.37A9.818 9.818 0 1112 21.818z"/></svg>
+      Contato via WhatsApp
+    </a>
+
+
+    <div class="logout-link">
+      <a href="{% url 'logout' %}">← Sair da conta</a>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    var btnGerar = document.getElementById('btnGerarQR');
+    var qrContainer = document.getElementById('qrContainer');
+    var qrImg = document.getElementById('qrImg');
+    var pixCode = document.getElementById('pixCode');
+    var btnCopy = document.getElementById('btnCopy');
+    var qrStatus = document.getElementById('qrStatus');
+    var statusAprovado = document.getElementById('statusAprovado');
+
+    var paymentId = null;
+    var pollTimer = null;
+
+    if (btnGerar) {
+      btnGerar.addEventListener('click', function () {
+        btnGerar.disabled = true;
+        btnGerar.textContent = 'Gerando QR Code...';
+
+        fetch('/pagamento/gerar-pix/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            alert('Erro: ' + (data.erro || 'Tente novamente.'));
+            btnGerar.disabled = false;
+            btnGerar.textContent = 'Gerar QR Code PIX — R$20';
+            return;
+          }
+          paymentId = data.payment_id;
+          if (data.qr_code_base64) {
+            qrImg.src = 'data:image/png;base64,' + data.qr_code_base64;
+          }
+          if (data.qr_code) {
+            pixCode.textContent = data.qr_code;
+          }
+          btnGerar.style.display = 'none';
+          qrContainer.classList.add('visible');
+          iniciarPolling();
+        })
+        .catch(function () {
+          alert('Erro de conexão. Tente novamente.');
+          btnGerar.disabled = false;
+          btnGerar.textContent = 'Gerar QR Code PIX — R$20';
+        });
+      });
+    }
+
+    if (btnCopy) {
+      btnCopy.addEventListener('click', function () {
+        var txt = pixCode.textContent;
+        if (!txt || txt === '—') return;
+        navigator.clipboard.writeText(txt).then(function () {
+          btnCopy.textContent = '✓ Copiado!';
+          btnCopy.classList.add('copied');
+          setTimeout(function () {
+            btnCopy.textContent = 'Copiar';
+            btnCopy.classList.remove('copied');
+          }, 2500);
+        });
+      });
+    }
+
+    function iniciarPolling() {
+      if (!paymentId) return;
+      pollTimer = setInterval(verificarStatus, 5000);
+    }
+
+    function verificarStatus() {
+      if (!paymentId) return;
+      fetch('/pagamento/status-mp/' + paymentId + '/', {
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.aprovado) {
+          clearInterval(pollTimer);
+          qrContainer.classList.remove('visible');
+          statusAprovado.classList.add('visible');
+          setTimeout(function () { window.location.href = '/app/'; }, 2500);
+        } else if (data.status === 'rejected' || data.status === 'cancelled') {
+          clearInterval(pollTimer);
+          qrStatus.textContent = 'Pagamento não aprovado. Tente novamente.';
+          btnGerar.style.display = 'flex';
+          btnGerar.disabled = false;
+          btnGerar.textContent = 'Tentar Novamente';
+          qrContainer.classList.remove('visible');
+        }
+      })
+      .catch(function () {});
+    }
+  })();
+  </script>
+</body>
+</html>

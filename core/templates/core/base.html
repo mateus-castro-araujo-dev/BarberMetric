@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}BarberCloud{% endblock %}</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.2">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <meta name="theme-color" content="#0B0B12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+  <div class="bg-glow"></div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="barber-pole"></div>
+        <div>
+          <span class="logo-name">BarberCloud</span>
+          <span class="logo-sub">Gestão Inteligente</span>
+        </div>
+      </div>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar">
+        {% include 'core/_icon.html' with name='x' %}
+      </button>
+    </div>
+
+    <!-- Welcome block -->
+    <div class="sidebar-welcome">
+      <div class="welcome-title">
+        Bem-vindo,<br>{{ barbeiro_atual.nome|default:request.user.first_name|default:request.user.username }}
+      </div>
+      <div class="welcome-meta">
+      </div>
+    </div>
+
+    {% if todos_barbeiros %}
+    <div class="barbeiro-switcher">
+      <div class="barbeiro-label">Barbeiro ativo</div>
+      <div class="barbeiro-atual">
+        {% if modo_todos %}
+          <span class="barbeiro-avatar">★</span>
+          <span class="barbeiro-nome">Todos</span>
+        {% else %}
+          <span class="barbeiro-avatar">{{ barbeiro_atual.nome|first|upper }}</span>
+          <span class="barbeiro-nome">{{ barbeiro_atual.nome|default:"Selecione" }}</span>
+        {% endif %}
+        <span class="barbeiro-arrow">{% include 'core/_icon.html' with name='chevron-down' %}</span>
+      </div>
+      <div class="barbeiro-dropdown">
+        <a href="{% url 'trocar_para_todos' %}" class="barbeiro-opt {% if modo_todos %}active{% endif %}">
+          <span class="barbeiro-avatar sm">★</span>
+          Todos
+        </a>
+        {% for b in todos_barbeiros %}
+        <a href="{% url 'trocar_barbeiro' b.pk %}" class="barbeiro-opt {% if not modo_todos and b == barbeiro_atual %}active{% endif %}">
+          <span class="barbeiro-avatar sm">{{ b.nome|first|upper }}</span>
+          {{ b.nome }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Visão Geral</div>
+      <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='zap' %}</span>
+        <span class="nav-text">Atendimento</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'relatorios' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'relatorios' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='chart-bar' %}</span>
+        <span class="nav-text">Relatórios</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'graficos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'graficos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+        <span class="nav-text">Gráficos</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Gestão</div>
+      <a href="{% url 'lista_clientes' %}"
+        class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='users' %}</span>
+        <span class="nav-text">Clientes</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'barbeiros' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'barbeiros' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='user' %}</span>
+        <span class="nav-text">Barbeiros</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'servicos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'servicos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='scissors' %}</span>
+        <span class="nav-text">Serviços</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'produtos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'produtos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='shopping' %}</span>
+        <span class="nav-text">Produtos</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Atividade</div>
+      <a href="{% url 'fila' %}" class="nav-link {% if request.resolver_match.url_name == 'fila' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='list' %}</span>
+        <span class="nav-text">Fila / Status</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Outros</div>
+      <a href="{% url 'logout' %}" class="nav-link danger">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='logout' %}</span>
+        <span class="nav-text">Sair</span>
+      </a>
+    </nav>
+
+    {% if plano == 'trial' %}
+    <div class="trial-sidebar-badge">
+      <div class="trial-icon">{% include 'core/_icon.html' with name='clock' %}</div>
+      <div>
+        <div class="trial-text">Período de teste</div>
+        <div class="trial-dias">{{ dias_trial }} dia{{ dias_trial|pluralize }} restante{{ dias_trial|pluralize }}</div>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="breadcrumb">
+        <span class="bc-home">{% include 'core/_icon.html' with name='home' %}</span>
+        <span class="bc-overview">Visão Geral</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">{% block page_title %}Dashboard{% endblock %}</span>
+      </nav>
+
+      <div class="topbar-search">
+        <span class="search-icon">{% include 'core/_icon.html' with name='search' %}</span>
+        <input type="text" id="topbar-search" placeholder="Buscar..." autocomplete="off">
+      </div>
+
+      <div class="topbar-right">
+        {% if plano == 'trial' and dias_trial <= 5 %} <span class="trial-alert-badge">
+          {% include 'core/_icon.html' with name='alert' %} {{ dias_trial }}d teste
+          </span>
+          {% endif %}
+      </div>
+    </header>
+
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+
+
+  <script src="{% static 'js/main.js' %}?v=1.1"></script>
+  {% block extra_js %}{% endblock %}
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("{% static 'js/sw.js' %}").catch(() => { });
+    }
+
+    (function() {
+      const inp = document.getElementById('topbar-search');
+      if (!inp) return;
+      inp.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.data-table tbody tr').forEach(function(row) {
+          row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>

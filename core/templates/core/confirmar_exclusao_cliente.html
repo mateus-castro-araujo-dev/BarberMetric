@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+{% block title %}Excluir Cliente — BarberCloud{% endblock %}
+{% block page_title %}Excluir Cliente{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:480px">
+  <div class="card-header">
+    <h2 class="card-title" style="color:var(--danger)">Confirmar Exclusão</h2>
+  </div>
+  <p style="padding:1.25rem; color:var(--text-dim); margin-bottom:0">
+    Tem certeza que deseja excluir o cliente <strong style="color:var(--text)">{{ cliente.nome }}</strong>?
+    Todo o histórico de atendimentos será mantido, mas o cliente será removido da lista.
+  </p>
+  <div class="form-actions" style="padding:0 1.25rem 1.25rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+    <form method="POST" style="flex:1; display:flex;">
+      {% csrf_token %}
+      <button type="submit" class="btn-submit" style="background:#f33131; color:#fff; flex:1;">Sim, excluir</button>
+    </form>
+    <a href="{% url 'lista_clientes' %}" class="btn-outline" style="flex:1; justify-content:center;">Cancelar</a>
+  </div>
+</div>
+{% endblock %}

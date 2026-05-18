@@ -1,0 +1,373 @@
+{% extends 'core/base.html' %}
+{% block title %}Atendimento — BarberCloud{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+
+
+<!-- Header "Live Crypto Updates" style -->
+<div class="live-header">
+  <h1 class="live-title" style="justify-content: center;">
+    Atendimentos
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='scissors' %}</span>
+  </h1>
+</div>
+
+
+
+<!-- Formulários (atendimento + produto) -->
+<div class="home-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">{% include 'core/_icon.html' with name='scissors' %} Registrar Serviço</h2>
+    </div>
+    <form method="POST" action="{% url 'registrar_venda' %}" id="form-servico">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <div class="cliente-row">
+          <div style="flex:1; display:flex; flex-direction:column;">
+            <input type="text" name="cliente_nome" id="cliente-input" class="form-input" style="width:100%"
+              placeholder="Nome do cliente" autocomplete="off">
+            <div id="autocomplete-list" class="autocomplete-inline" style="display:none"></div>
+          </div>
+          <label class="novo-toggle" title="Cadastrar novo cliente">
+            <input type="checkbox" name="is_novo" value="1" id="chk-novo">
+            {% include 'core/_icon.html' with name='user-plus' %}
+            <span>Novo</span>
+          </label>
+        </div>
+        <input type="text" name="telefone" id="tel-novo" class="form-input" style="margin-top:.5rem;display:none"
+          placeholder="Telefone (novo cliente)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Serviços</label>
+        <div class="servicos-grid">
+          {% for s in servicos %}
+          <label class="servico-card">
+            <input type="checkbox" name="servicos" value="{{ s.id }}" class="servico-chk">
+            <span class="servico-nome">{{ s.nome }}</span>
+            <span class="servico-preco">R$ {{ s.preco }}</span>
+          </label>
+          {% empty %}
+          <p class="empty-hint">Nenhum serviço cadastrado. <a href="{% url 'servicos' %}">Adicionar</a></p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="total-display" id="total-display" style="display:none">
+          <span>Total</span>
+          <span class="total-valor" id="total-valor">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Forma de Pagamento</label>
+        <div class="pagamento-grid">
+          <label class="pag-opt"><input type="radio" name="pagamento" value="PIX" checked> PIX</label>
+          <label class="pag-opt"><input type="radio" name="pagamento" value="DINHEIRO"> Dinheiro</label>
+          <label class="pag-opt"><input type="radio" name="pagamento" value="CREDITO"> Crédito</label>
+          <label class="pag-opt"><input type="radio" name="pagamento" value="DEBITO"> Débito</label>
+          <label class="pag-opt"><input type="radio" name="pagamento" value="PLANO"> Plano</label>
+        </div>
+      </div>
+
+      <div id="erro-servico" style="display:none; color:#F87171; background:rgba(248,113,113,.1); padding:.35rem .65rem; border-radius:var(--r2); border:1px solid rgba(248,113,113,.3); margin-bottom:.75rem; font-size:.78rem; font-weight:500; width:fit-content; margin-left: 20px;">
+        Selecione pelo menos um serviço antes de salvar.
+      </div>
+
+      <button type="submit" class="btn-submit">{% include 'core/_icon.html' with name='zap' %} Registrar Atendimento</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">{% include 'core/_icon.html' with name='shopping' %} Venda de Produto</h2>
+    </div>
+    <form method="POST" action="{% url 'registrar_produto' %}" id="form-produto">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Cliente (opcional)</label>
+        <input type="text" name="cliente_nome" id="cliente-input-p" class="form-input" placeholder="Nome do cliente" autocomplete="off">
+        <div id="autocomplete-list-p" class="autocomplete-inline" style="display:none"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Produtos</label>
+      </div>
+      <div class="produtos-lista">
+        {% for p in produtos %}
+        <div class="produto-row" data-preco="{{ p.preco }}">
+          <div class="produto-info">
+            <span class="produto-nome">{{ p.nome }}</span>
+            <span class="produto-preco">R$ {{ p.preco }}</span>
+          </div>
+          <div class="produto-qtd">
+            <input type="hidden" name="produto_id" value="{{ p.id }}">
+            <button type="button" class="qtd-btn qtd-minus">−</button>
+            <input type="number" name="produto_qtd" class="qtd-input" value="0" min="0" max="99" readonly>
+            <button type="button" class="qtd-btn qtd-plus">+</button>
+          </div>
+        </div>
+        {% empty %}
+        <p class="empty-hint">Nenhum produto cadastrado.</p>
+        {% endfor %}
+      </div>
+
+      <div class="form-group" style="margin-top:1.15rem">
+        <label class="form-label">Forma de Pagamento</label>
+        <div class="pagamento-grid">
+          <label class="pag-opt"><input type="radio" name="pagamento_produto" value="PIX" checked> PIX</label>
+          <label class="pag-opt"><input type="radio" name="pagamento_produto" value="DINHEIRO"> Dinheiro</label>
+          <label class="pag-opt"><input type="radio" name="pagamento_produto" value="CREDITO"> Crédito</label>
+          <label class="pag-opt"><input type="radio" name="pagamento_produto" value="DEBITO"> Débito</label>
+        </div>
+      </div>
+
+      <div class="total-display" id="total-produto" style="width: 60%; display:none;margin: 1rem;">
+        <span>Total produtos</span>
+        <span class="total-valor" id="total-produto-valor"></span>
+      </div>
+      <button type="submit" id="btn-registrar-produto" class="btn-submit">{% include 'core/_icon.html' with name='shopping' %} Registrar Venda</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- "Market Overview" style — visão geral de serviços -->
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">
+        {% include 'core/_icon.html' with name='clock' %} Catálogo Ativo
+      </div>
+      <div class="overview-title">Serviços Cadastrados</div>
+    </div>
+
+  </div>
+  <div class="card">
+    {% if servicos %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Serviço</th>
+            <th>Preço</th>
+            <th>Status</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in servicos %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td>
+              <span class="cliente-link">
+                <span class="cell-avatar">{{ s.nome|first|upper }}</span>
+                {{ s.nome }}
+              </span>
+            </td>
+            <td class="valor-cell">R$ {{ s.preco }}</td>
+            <td><span class="pct-pill up">Ativo</span></td>
+            <td><span class="pct-pill {% cycle 'up' 'down' 'up' 'up' 'down' %}">Serviço</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Nenhum serviço cadastrado. <a href="{% url 'servicos' %}" style="color:var(--accent-2)">Adicionar serviços</a></p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+
+  /* ── Serviços: total dinâmico ───────────────────── */
+  var precos = { {% for s in servicos %}"{{ s.id }}": "{{ s.preco }}",{% endfor %} };
+
+  function atualizarTotalServico() {
+    var total = 0;
+    document.querySelectorAll('.servico-chk:checked').forEach(function (chk) {
+      total += parseFloat((precos[chk.value] || '0').replace(',', '.'));
+    });
+    var pag = document.querySelector('input[name="pagamento"]:checked');
+    var disp = document.getElementById('total-display');
+    var val  = document.getElementById('total-valor');
+    if (!disp || !val) return;
+    if (total > 0) {
+      disp.style.display = 'flex';
+      val.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+    } else {
+      disp.style.display = 'none';
+    }
+  }
+
+  document.querySelectorAll('.servico-chk').forEach(function (chk) {
+    chk.addEventListener('change', atualizarTotalServico);
+  });
+  document.querySelectorAll('input[name="pagamento"]').forEach(function (r) {
+    r.addEventListener('change', atualizarTotalServico);
+  });
+
+  /* novo cliente: mostrar campo telefone */
+  var chkNovo = document.getElementById('chk-novo');
+  if (chkNovo) {
+    chkNovo.addEventListener('change', function () {
+      var t = document.getElementById('tel-novo');
+      if (t) t.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+
+  /* sugestão de serviços pelo histórico do cliente */
+  try {
+    var hints = {{ hints|safe }};
+    var clienteInput = document.getElementById('cliente-input');
+    if (clienteInput) {
+      clienteInput.addEventListener('change', function () {
+        var h = hints[this.value];
+        if (!h) return;
+        document.querySelectorAll('.servico-chk').forEach(function (chk) {
+          var label = chk.closest('.servico-card').querySelector('.servico-nome').textContent.trim();
+          chk.checked = h.includes(label);
+        });
+        atualizarTotalServico();
+      });
+    }
+  } catch (e) {}
+
+  /* ── Autocomplete Customizado Inline ── */
+  var todosClientes = [
+    {% for c in clientes %}"{{ c.nome|escapejs }}",{% endfor %}
+  ];
+
+  function setupAutocomplete(inputId, dropdownId) {
+    var input = document.getElementById(inputId);
+    var dropdown = document.getElementById(dropdownId);
+    if (!input || !dropdown) return;
+
+    input.addEventListener('input', function() {
+      var val = this.value.trim().toLowerCase();
+      dropdown.innerHTML = '';
+      if (!val) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      var matches = todosClientes.filter(function(name) {
+        return name.toLowerCase().includes(val);
+      });
+      if (matches.length > 0) {
+        matches.forEach(function(name) {
+          var div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.textContent = name;
+          div.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // evita blur
+            input.value = name;
+            dropdown.style.display = 'none';
+            input.dispatchEvent(new Event('change'));
+          });
+          dropdown.appendChild(div);
+        });
+        dropdown.style.display = 'flex';
+      } else {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    input.addEventListener('blur', function() {
+      dropdown.style.display = 'none';
+    });
+    input.addEventListener('focus', function() {
+      if (this.value.trim() && dropdown.children.length > 0) {
+        dropdown.style.display = 'flex';
+      }
+    });
+  }
+  setupAutocomplete('cliente-input', 'autocomplete-list');
+  setupAutocomplete('cliente-input-p', 'autocomplete-list-p');
+
+  /* ── Produtos: botões + / − ─────────────────────── */
+  function atualizarTotalProduto() {
+    var total = 0;
+    document.querySelectorAll('.produto-row').forEach(function (row) {
+      var inp = row.querySelector('.qtd-input');
+      if (!inp) return;
+      var qtd   = parseInt(inp.value, 10) || 0;
+      var preco = parseFloat((row.getAttribute('data-preco') || '0').replace(',', '.'));
+      total += qtd * preco;
+    });
+    var totalBox = document.getElementById('total-produto');
+    var totalVal = document.getElementById('total-produto-valor');
+    if (totalBox) totalBox.style.display = total > 0 ? 'flex' : 'none';
+    if (totalVal) totalVal.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+  }
+
+  document.querySelectorAll('.qtd-minus').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var inp = this.closest('.produto-row').querySelector('.qtd-input');
+      if (!inp) return;
+      inp.value = Math.max(0, (parseInt(inp.value, 10) || 0) - 1);
+      atualizarTotalProduto();
+    });
+  });
+
+  document.querySelectorAll('.qtd-plus').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var inp = this.closest('.produto-row').querySelector('.qtd-input');
+      if (!inp) return;
+      inp.value = (parseInt(inp.value, 10) || 0) + 1;
+      atualizarTotalProduto();
+    });
+  });
+
+  /* validação antes de enviar o form de serviço */
+  var formServico = document.getElementById('form-servico');
+  var erroServico = document.getElementById('erro-servico');
+  if (formServico && erroServico) {
+    formServico.addEventListener('submit', function (e) {
+      var algum = document.querySelectorAll('.servico-chk:checked').length > 0;
+      if (!algum) {
+        e.preventDefault();
+        erroServico.style.display = 'block';
+        erroServico.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    document.querySelectorAll('.servico-chk').forEach(function (chk) {
+      chk.addEventListener('change', function () {
+        if (document.querySelectorAll('.servico-chk:checked').length > 0) {
+          erroServico.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  /* validação antes de enviar o form de produto */
+  var formProduto = document.getElementById('form-produto');
+  if (formProduto) {
+    formProduto.addEventListener('submit', function (e) {
+      var algum = false;
+      document.querySelectorAll('.qtd-input').forEach(function (inp) {
+        if ((parseInt(inp.value, 10) || 0) > 0) algum = true;
+      });
+      if (!algum) {
+        e.preventDefault();
+        alert('Selecione pelo menos um produto (clique em +).');
+      }
+    });
+  }
+
+})();
+</script>
+{% endblock %}

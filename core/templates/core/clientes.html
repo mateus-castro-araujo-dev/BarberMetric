@@ -1,0 +1,162 @@
+{% extends 'core/base.html' %}
+{% block title %}Clientes — BarberCloud{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Base ativa: <strong>{{ clientes|length }} clientes</strong></span>
+  </div>
+  <h1 class="live-title">
+    Carteira de Clientes
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='users' %}</span>
+  </h1>
+</div>
+
+<div class="crypto-cards">
+  <div class="crypto-card c-orange">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-orange">{% include 'core/_icon.html' with name='users' %}</div>
+        <div>
+          <div class="cc-pair">TOTAL/BASE</div>
+          <div class="cc-name">Clientes</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Total Cadastrados</div>
+    <div class="cc-value">{{ clientes|length }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Base ativa
+    </span>
+  </div>
+
+  <div class="crypto-card c-green">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-green">{% include 'core/_icon.html' with name='flame' %}</div>
+        <div>
+          <div class="cc-pair">ATIVOS/7D</div>
+          <div class="cc-name">Esta semana</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Ativos esta semana</div>
+    <div class="cc-value">{{ ativos_semana }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Engajados
+    </span>
+  </div>
+
+  <div class="crypto-card c-red">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-red">{% include 'core/_icon.html' with name='sleep' %}</div>
+        <div>
+          <div class="cc-pair">INATIVOS/30D</div>
+          <div class="cc-name">+30 dias</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Inativos</div>
+    <div class="cc-value">{{ inativos_count }}</div>
+    <span class="cc-trend down">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='alert' %}</span>
+      Inatividade
+    </span>
+  </div>
+</div>
+
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='clock' %} Listagem completa</div>
+      <div class="overview-title">Lista de Clientes</div>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <input type="text" id="search-clientes" class="form-input compact" placeholder="Buscar cliente...">
+      <a href="{% url 'exportar_csv' %}" class="btn-outline">{% include 'core/_icon.html' with name='download' %} CSV</a>
+    </div>
+  </div>
+
+  <div class="card">
+    {% if clientes %}
+    <div class="table-scroll">
+      <table class="data-table" id="clientes-table">
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Cliente</th>
+            <th>Telefone</th>
+            <th>Visitas</th>
+            <th>Total Gasto</th>
+            <th>Última Visita</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in clientes %}
+          <tr class="{% if c.inativo %}row-inativo{% endif %}">
+            <td>#{{ forloop.counter }}</td>
+            <td>
+              <a href="{% url 'perfil_cliente' c.pk %}" class="cliente-link">
+                <span class="cell-avatar">{{ c.nome|first|upper }}</span>
+                {{ c.nome }}
+              </a>
+            </td>
+            <td>{{ c.telefone|default:"—" }}</td>
+            <td>{{ c.total_visitas }}</td>
+            <td class="valor-cell">R$ {{ c.total_gasto|floatformat:2 }}</td>
+            <td>
+              {% if c.ultima_visita %}
+                {{ c.ultima_visita|date:"d/m/Y" }}
+                {% if c.dias_sem_visita is not None %}
+                <small class="text-muted">({{ c.dias_sem_visita }}d)</small>
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if c.inativo %}
+              <span class="pct-pill down">Inativo</span>
+              {% else %}
+              <span class="pct-pill up">Ativo</span>
+              {% endif %}
+            </td>
+            <td class="actions-cell">
+              <a href="{% url 'perfil_cliente' c.pk %}" class="btn-icon" title="Ver perfil">{% include 'core/_icon.html' with name='eye' %}</a>
+              <a href="{% url 'editar_cliente' c.pk %}" class="btn-icon" title="Editar">{% include 'core/_icon.html' with name='edit' %}</a>
+              <a href="{% url 'excluir_cliente' c.pk %}" class="btn-icon danger" title="Excluir">{% include 'core/_icon.html' with name='trash' %}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Nenhum cliente cadastrado ainda. Eles aparecem aqui automaticamente ao registrar atendimentos.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const inp = document.getElementById('search-clientes');
+if (inp) {
+  inp.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#clientes-table tbody tr').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+</script>
+{% endblock %}

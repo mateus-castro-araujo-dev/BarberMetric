@@ -1,0 +1,258 @@
+{% extends 'core/base.html' %}
+{% block title %}Relatórios — BarberCloud{% endblock %}
+{% block page_title %}Relatórios{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header estilo "Live Updates" -->
+<div class="live-header">
+  <div class="live-tag">
+    <span>Período: <strong>{{ data_sel|date:"d/m/Y" }}</strong></span>
+  </div>
+  <h1 class="live-title">
+    Relatório do Dia
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='chart-bar' %}</span>
+  </h1>
+</div>
+
+<!-- Filtro -->
+<div class="filter-bar">
+  <form method="GET" class="date-filter">
+    <label class="form-label">{% include 'core/_icon.html' with name='calendar' %} Data</label>
+    <input type="date" name="data" value="{{ data_sel|date:'Y-m-d' }}" class="form-input compact" onchange="this.form.submit()">
+  </form>
+  <a href="{% url 'exportar_csv' %}" class="btn-outline">{% include 'core/_icon.html' with name='download' %} Exportar CSV</a>
+</div>
+
+<!-- Cards estilo crypto -->
+<div class="crypto-cards">
+  <div class="crypto-card c-orange">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-orange">{% include 'core/_icon.html' with name='wallet' %}</div>
+        <div>
+          <div class="cc-pair">BRL/DIA</div>
+          <div class="cc-name">Faturamento</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Total do Dia</div>
+    <div class="cc-value">R$ {{ total_geral|floatformat:2 }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Hoje
+    </span>
+  </div>
+
+  <div class="crypto-card c-indigo">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-indigo">{% include 'core/_icon.html' with name='chair' %}</div>
+        <div>
+          <div class="cc-pair">CLIENTES/DIA</div>
+          <div class="cc-name">Atendidos</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Clientes Hoje</div>
+    <div class="cc-value">{{ clientes_hoje }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='users' %}</span>
+      Ativos
+    </span>
+  </div>
+
+  <div class="crypto-card c-green">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-green">{% include 'core/_icon.html' with name='calendar' %}</div>
+        <div>
+          <div class="cc-pair">CLIENTES/SEMANA</div>
+          <div class="cc-name">7 dias</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Semana</div>
+    <div class="cc-value">{{ clientes_semana }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+      Crescendo
+    </span>
+  </div>
+
+  <div class="crypto-card c-red">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-red">{% include 'core/_icon.html' with name='calendar' %}</div>
+        <div>
+          <div class="cc-pair">CLIENTES/MÊS</div>
+          <div class="cc-name">30 dias</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Mês</div>
+    <div class="cc-value">{{ clientes_mes }}</div>
+    <span class="cc-trend up">
+      <span class="cc-trend-icon">{% include 'core/_icon.html' with name='chart-bar' %}</span>
+      Total
+    </span>
+  </div>
+</div>
+
+<!-- Pagamentos -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='credit-card' %} Formas de Pagamento</h2></div>
+  <div class="pag-breakdown">
+    <div class="pag-item pix">
+      <span class="pag-label">PIX</span>
+      <span class="pag-val">R$ {{ pix|floatformat:2 }}</span>
+    </div>
+    <div class="pag-item din">
+      <span class="pag-label">Dinheiro</span>
+      <span class="pag-val">R$ {{ dinheiro|floatformat:2 }}</span>
+    </div>
+    <div class="pag-item cart">
+      <span class="pag-label">Cartão</span>
+      <span class="pag-val">R$ {{ cartao|floatformat:2 }}</span>
+    </div>
+    <div class="pag-item plan">
+      <span class="pag-label">Plano</span>
+      <span class="pag-val">R$ {{ plano|floatformat:2 }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Gráfico -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='trending' %} Últimos 7 dias</h2></div>
+  <div class="chart-container" style="height:220px">
+    <canvas id="semana-chart"></canvas>
+  </div>
+</div>
+
+<!-- Atendimentos overview -->
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='clock' %} Transações do Dia</div>
+      <div class="overview-title">Atendimentos</div>
+    </div>
+
+  </div>
+  <div class="card">
+    {% if atendimentos %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Nº</th><th>Horário</th><th>Cliente</th><th>Serviços</th><th>Pagamento</th><th>Valor</th><th></th></tr></thead>
+        <tbody>
+          {% for a in atendimentos %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td><span style="font-variant-numeric:tabular-nums">{{ a.data|date:"H:i" }}</span></td>
+            <td>
+              <span class="cliente-link">
+                <span class="cell-avatar">{{ a.cliente.nome|first|upper|default:"?" }}</span>
+                {{ a.cliente.nome|default:"—" }}
+              </span>
+            </td>
+            <td>
+              <span class="servicos-tag">{{ a.servicos_prestados }}</span>
+              {% if modo_todos %}<br><small style="color:#fff;font-size:.78rem">✂ {{ a.barbeiro.nome|default:"—" }}</small>{% endif %}
+            </td>
+            <td><span class="badge-pag {{ a.forma_pagamento|lower }}">{{ a.forma_pagamento }}</span></td>
+            <td class="valor-cell">R$ {{ a.valor_total|floatformat:2 }}</td>
+            <td class="actions-cell">
+              <a href="{% url 'excluir_atendimento' a.pk %}" class="btn-del" onclick="return confirm('Excluir este atendimento?')">{% include 'core/_icon.html' with name='trash' %}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Nenhum atendimento nesta data.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if vendas_prod %}
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='shopping' %} Produtos</div>
+      <div class="overview-title">Vendas de Produto</div>
+    </div>
+
+  </div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Nº</th><th>Horário</th><th>Produto</th><th>Qtd</th><th>Cliente</th><th>Pagamento</th><th>Valor</th><th></th></tr></thead>
+        <tbody>
+          {% for v in vendas_prod %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td><span style="font-variant-numeric:tabular-nums">{{ v.data|date:"H:i" }}</span></td>
+            <td>
+              <span class="cliente-link">
+                <span class="cell-avatar">{{ v.produto.nome|first|upper|default:"?" }}</span>
+                {{ v.produto.nome|default:"—" }}
+              </span>
+            </td>
+            <td>{{ v.quantidade }}{% if modo_todos %}<br><small style="color:var(--text-dim);font-size:.78rem">✂ {{ v.barbeiro.nome|default:"—" }}</small>{% endif %}</td>
+            <td>{{ v.cliente.nome|default:"—" }}</td>
+            <td><span class="badge-pag {{ v.forma_pagamento|lower }}">{{ v.forma_pagamento }}</span></td>
+            <td class="valor-cell">R$ {{ v.valor_total|floatformat:2 }}</td>
+            <td class="actions-cell">
+              <a href="{% url 'excluir_venda_produto' v.pk %}" class="btn-del" onclick="return confirm('Excluir esta venda?')">{% include 'core/_icon.html' with name='trash' %}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+new Chart(document.getElementById('semana-chart'), {
+  type: 'line',
+  data: {
+    labels: {{ semana_labels|safe }},
+    datasets: [{
+      label: 'Faturamento',
+      data: {{ semana_valores|safe }},
+      borderColor: '#DC2626',
+      backgroundColor: 'rgba(220,38,38,0.12)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#DC2626',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1F1F2E' }, ticks: { color: '#9CA3AF', font: { family: 'Outfit' } } },
+      y: { grid: { color: '#1F1F2E' }, ticks: { color: '#9CA3AF', font: { family: 'Outfit' }, callback: v => 'R$' + v } }
+    }
+  }
+});
+</script>
+{% endblock %}

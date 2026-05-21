@@ -1,4 +1,5 @@
 ﻿import json
+import re
 import hashlib
 import hmac
 import requests as http_requests
@@ -343,15 +344,27 @@ def gerar_pagamento_pix(request):
         valor = float(getattr(django_settings, 'ASSINATURA_VALOR_PRO', 14.90))
         descricao_plano = 'Pro'
 
+    try:
+        cpf_numeros = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
+    except Exception:
+        cpf_numeros = ''
+
+    payer_data = {
+        'email': barbearia.user.email,
+        'first_name': barbearia.user.first_name or 'Cliente',
+        'last_name': barbearia.user.last_name or barbearia.nome,
+    }
+    if cpf_numeros and len(cpf_numeros) == 11:
+        payer_data['identification'] = {
+            'type': 'CPF',
+            'number': cpf_numeros,
+        }
+
     payload = {
         'transaction_amount': valor,
         'description': f'Barber Metric — Plano {descricao_plano} — {barbearia.nome}',
         'payment_method_id': 'pix',
-        'payer': {
-            'email': barbearia.user.email,
-            'first_name': barbearia.user.first_name or 'Cliente',
-            'last_name': barbearia.user.last_name or 'Barber Metric',
-        },
+        'payer': payer_data,
         'external_reference': str(barbearia.pk),
         'metadata': {'barbearia_id': barbearia.pk, 'barbearia_nome': barbearia.nome},
     }

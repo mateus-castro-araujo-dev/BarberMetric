@@ -20,6 +20,7 @@ from .models import Barbearia, SolicitacaoPagamento, PagamentoMP, hash_cpf, norm
 from core.models import Barbeiro
 
 MP_API_BASE = 'https://api.mercadopago.com'
+ABACATE_API_BASE = 'https://api.abacatepay.com/v1'
 
 
 def index(request):
@@ -306,17 +307,17 @@ def pagamento(request):
     })
 
 
-# ─── Mercado Pago ────────────────────────────────────────────────────────────
+# ─── Abacate Pay (PIX) ───────────────────────────────────────────────────────
 
 @login_required(login_url='/login/')
 def gerar_pagamento_pix(request):
-    """Cria um pagamento PIX no Mercado Pago e retorna QR code."""
+    """Cria um pagamento PIX via Abacate Pay e retorna QR code."""
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'erro': 'Método inválido'}, status=405)
 
-    token = getattr(django_settings, 'MP_ACCESS_TOKEN', '')
-    if not token:
-        return JsonResponse({'ok': False, 'erro': 'Mercado Pago não configurado.'}, status=503)
+    api_key = getattr(django_settings, 'ABACATEPAY_KEY', '')
+    if not api_key:
+        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'}, status=503)
 
     try:
         barbearia = request.user.barbearia
@@ -344,69 +345,62 @@ def gerar_pagamento_pix(request):
         valor = float(getattr(django_settings, 'ASSINATURA_VALOR_PRO', 14.90))
         descricao_plano = 'Pro'
 
-    try:
-        cpf_numeros = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
-    except Exception:
-        cpf_numeros = ''
+    valor_centavos = int(round(valor * 100))
 
-    payer_data = {
-        'email': barbearia.user.email,
-        'first_name': barbearia.user.first_name or 'Cliente',
-        'last_name': barbearia.user.last_name or barbearia.nome,
-    }
-    if cpf_numeros and len(cpf_numeros) == 11:
-        payer_data['identification'] = {
-            'type': 'CPF',
-            'number': cpf_numeros,
-        }
+    try:
+        cpf_formatado = barbearia.cpf_proprietario or ''
+    except Exception:
+        cpf_formatado = ''
+
+    nome_completo = f"{barbearia.user.first_name or ''} {barbearia.user.last_name or ''}".strip() or barbearia.nome
+    telefone = re.sub(r'\D', '', getattr(barbearia, 'telefone', '') or '')
+    if telefone and not telefone.startswith('+'):
+        telefone = '+55' + telefone
 
     payload = {
-        'transaction_amount': valor,
-        'description': f'Barber Metric — Plano {descricao_plano} — {barbearia.nome}',
-        'payment_method_id': 'pix',
-        'payer': payer_data,
-        'external_reference': str(barbearia.pk),
-        'metadata': {'barbearia_id': barbearia.pk, 'barbearia_nome': barbearia.nome},
+        'amount': valor_centavos,
+        'expiresIn': 3600,
+        'description': f'Barber Metric Plano {descricao_plano}',
+        'customer': {
+            'name': nome_completo,
+            'email': barbearia.user.email,
+            'cellphone': telefone or '+5511999999999',
+            'taxId': cpf_formatado,
+        },
+        'metadata': {'barbearia_id': barbearia.pk, 'plano': plano_escolhido},
     }
-    site_url = getattr(django_settings, 'SITE_URL', '').rstrip('/')
-    if site_url:
-        payload['notification_url'] = site_url + '/pagamento/webhook-mp/'
 
     headers = {
-        'Authorization': f'Bearer {token}',
+        'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json',
-        'X-Idempotency-Key': f'Barber Metric-{barbearia.pk}-{int(timezone.now().timestamp())}',
     }
 
     try:
         resp = http_requests.post(
-            f'{MP_API_BASE}/v1/payments',
+            f'{ABACATE_API_BASE}/pixQrCode/create',
             json=payload,
             headers=headers,
             timeout=15,
         )
         data = resp.json()
         if not resp.ok:
-            detalhe = data.get('message') or data.get('error') or str(data)
-            causa = data.get('cause', [])
-            if causa:
-                detalhe += ' | ' + '; '.join(str(c) for c in causa)
-            return JsonResponse({'ok': False, 'erro': f'MP {resp.status_code}: {detalhe}'}, status=502)
+            erro = data.get('error') or data.get('message') or str(data)
+            return JsonResponse({'ok': False, 'erro': f'Erro {resp.status_code}: {erro}'}, status=502)
     except http_requests.RequestException as e:
         return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
 
-    poi = data.get('point_of_interaction', {}).get('transaction_data', {})
-    qr_code = poi.get('qr_code', '')
-    qr_base64 = poi.get('qr_code_base64', '')
-    payment_id = str(data.get('id', ''))
+    pix_data = data.get('data', data)
+    payment_id = str(pix_data.get('id', ''))
+    qr_code = pix_data.get('brCode', '')
+    qr_base64 = pix_data.get('brCodeBase64', '')
 
     if not payment_id:
-        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do Mercado Pago.'}, status=502)
+        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway de pagamento.'}, status=502)
 
     PagamentoMP.objects.create(
         barbearia=barbearia,
         payment_id=payment_id,
-        status=data.get('status', 'pending'),
+        status='pending',
         plano_escolhido=plano_escolhido,
         qr_code=qr_code,
         qr_code_base64=qr_base64,
@@ -559,17 +553,27 @@ def verificar_status_mp(request, payment_id):
     except PagamentoMP.DoesNotExist:
         return JsonResponse({'ok': False, 'erro': 'Pagamento não encontrado.'}, status=404)
 
-    token = getattr(django_settings, 'MP_ACCESS_TOKEN', '')
-    if token:
+    api_key = getattr(django_settings, 'ABACATEPAY_KEY', '')
+    if api_key:
         try:
             resp = http_requests.get(
-                f'{MP_API_BASE}/v1/payments/{payment_id}',
-                headers={'Authorization': f'Bearer {token}'},
+                f'{ABACATE_API_BASE}/pixQrCode/check',
+                params={'id': payment_id},
+                headers={'Authorization': f'Bearer {api_key}'},
                 timeout=10,
             )
             if resp.ok:
                 data = resp.json()
-                novo_status = data.get('status', pag.status)
+                pix_data = data.get('data', data)
+                status_abacate = pix_data.get('status', '').upper()
+                # Mapeia status Abacate Pay → status interno
+                if status_abacate == 'PAID':
+                    novo_status = 'approved'
+                elif status_abacate in ('EXPIRED', 'CANCELLED', 'REFUNDED'):
+                    novo_status = 'cancelled'
+                else:
+                    novo_status = 'pending'
+
                 pag.status = novo_status
                 pag.save(update_fields=['status', 'atualizado_em'])
 

@@ -135,8 +135,9 @@ def verificar_email(request, token):
     barbearia.token_expira = None
     barbearia.save()
 
-    messages.success(request, 'E-mail verificado com sucesso! Bem-vindo ao Barber Metric.')
-    return redirect('home')
+    login(request, barbearia.user)
+    messages.success(request, 'E-mail verificado! Escolha seu plano para continuar.')
+    return redirect('pagamento')
 
 
 @login_required(login_url='/login/')

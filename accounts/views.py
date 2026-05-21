@@ -84,10 +84,8 @@ def cadastro(request):
 
             if plano_intencao in ('pro', 'max'):
                 request.session['plano_intencao'] = plano_intencao
-                messages.success(request, f'Bem-vindo! Confirme seu e-mail quando puder. Agora escolha seu plano e assine abaixo.')
-                return redirect('pagamento')
 
-            messages.success(request, 'Bem-vindo! Confirme seu e-mail para ativar a conta. Seu trial de 30 dias começou!')
+            messages.success(request, 'Bem-vindo! Confirme seu e-mail para ativar sua conta.')
             request.session['pwa_prompt'] = True
             return redirect('verificar_email_aviso')
     else:

@@ -118,17 +118,13 @@
   {% load static %}
   <div class="auth-wrapper">
     <div class="auth-logo">
-      <span class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></span>
+      <span class="logo-icon"><img src="{% static 'img/icon-192.png' %}" alt="Barber Metric" style="width:40px;height:40px;object-fit:cover;border-radius:8px;"></span>
       <h1>Barber Metric</h1>
       <div class="trial-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>30 dias grátis — sem cartão de crédito</div>
     </div>
 
     <div class="auth-card">
       <h2>Criar conta gratuita</h2>
-
-      <div class="info-box">
-        Você terá <strong>30 dias gratuitos</strong> para usar todas as funcionalidades. Após esse período, será solicitado o plano de assinatura para continuar.
-      </div>
 
       <form method="POST" id="cadastro-form">
         {% csrf_token %}

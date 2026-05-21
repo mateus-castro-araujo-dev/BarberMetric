@@ -1,5 +1,4 @@
 from django.shortcuts import redirect
-from django.urls import reverse
 
 
 EXEMPT_PREFIXES = (
@@ -32,6 +31,8 @@ class TrialMiddleware:
                     barbearia = request.user.barbearia
                     if not barbearia.ativo:
                         return redirect('conta_bloqueada')
+                    if not barbearia.email_verificado:
+                        return redirect('verificar_email_aviso')
                     if not barbearia.acesso_liberado:
                         return redirect('pagamento')
                 except Exception:

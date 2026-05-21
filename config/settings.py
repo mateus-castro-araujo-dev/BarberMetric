@@ -113,6 +113,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://192.168.0.104:8000',
     'http://192.168.196.21:8000',
+    'https://barberlab.pythonanywhere.com',
 ]
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
@@ -121,7 +122,8 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # PythonAnywhere usa proxy reverso — não redirecionar SSL diretamente
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
@@ -130,4 +132,5 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 

@@ -1,0 +1,598 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}Barber Metric{% endblock %}</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.2">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <meta name="theme-color" content="#6366F1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Barber Metric">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  {% block extra_css %}{% endblock %}
+  <!-- Anti-flash: aplica tema salvo ANTES do primeiro render -->
+  <script>
+    (function(){var t=localStorage.getItem('bm-theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
+  </script>
+</head>
+
+<body>
+
+  <div class="bg-glow"></div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="{% url 'landing' %}" class="sidebar-logo" style="text-decoration:none">
+        <div class="barber-pole"></div>
+        <div>
+          <span class="logo-name">Barber Metric</span>
+          <span class="logo-sub">Gestão Inteligente</span>
+        </div>
+      </a>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar">
+        {% include 'core/_icon.html' with name='x' %}
+      </button>
+    </div>
+
+    <!-- Welcome block -->
+    <div class="sidebar-welcome">
+      <div class="welcome-title">
+        Bem-vindo,<br>{{ barbeiro_atual.nome|default:request.user.first_name|default:request.user.username }}
+      </div>
+      <div class="welcome-meta">
+      </div>
+    </div>
+
+    {% if todos_barbeiros %}
+    <div class="barbeiro-switcher">
+      <div class="barbeiro-label">Barbeiro ativo</div>
+      <div class="barbeiro-atual">
+        {% if modo_todos %}
+          <span class="barbeiro-avatar">★</span>
+          <span class="barbeiro-nome">Todos</span>
+        {% else %}
+          <span class="barbeiro-avatar">{{ barbeiro_atual.nome|first|upper }}</span>
+          <span class="barbeiro-nome">{{ barbeiro_atual.nome|default:"Selecione" }}</span>
+        {% endif %}
+        <span class="barbeiro-arrow">{% include 'core/_icon.html' with name='chevron-down' %}</span>
+      </div>
+      <div class="barbeiro-dropdown">
+        <a href="{% url 'trocar_para_todos' %}" class="barbeiro-opt {% if modo_todos %}active{% endif %}">
+          <span class="barbeiro-avatar sm">★</span>
+          Todos
+        </a>
+        {% for b in todos_barbeiros %}
+        <a href="{% url 'trocar_barbeiro' b.pk %}" class="barbeiro-opt {% if not modo_todos and b == barbeiro_atual %}active{% endif %}">
+          <span class="barbeiro-avatar sm">{{ b.nome|first|upper }}</span>
+          {{ b.nome }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Visão Geral</div>
+      <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='zap' %}</span>
+        <span class="nav-text">Atendimento</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'relatorios' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'relatorios' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='chart-bar' %}</span>
+        <span class="nav-text">Relatórios</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'graficos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'graficos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='trending' %}</span>
+        <span class="nav-text">Gráficos</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Gestão</div>
+      <a href="{% url 'lista_clientes' %}"
+        class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='users' %}</span>
+        <span class="nav-text">Clientes</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'barbeiros' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'barbeiros' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='user' %}</span>
+        <span class="nav-text">Barbeiros</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'servicos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'servicos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='scissors' %}</span>
+        <span class="nav-text">Serviços</span>
+        <span class="nav-bar"></span>
+      </a>
+      <a href="{% url 'produtos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'produtos' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='shopping' %}</span>
+        <span class="nav-text">Produtos</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Atividade</div>
+      <a href="{% url 'fila' %}" class="nav-link {% if request.resolver_match.url_name == 'fila' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='list' %}</span>
+        <span class="nav-text">Fila / Status</span>
+        <span class="nav-bar"></span>
+      </a>
+
+      <div class="nav-section-label">Outros</div>
+      <a href="{% url 'logout' %}" class="nav-link danger">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='logout' %}</span>
+        <span class="nav-text">Sair</span>
+      </a>
+    </nav>
+
+    {% if plano == 'trial' %}
+    <div class="trial-sidebar-badge" onclick="abrirUpgradeModal('barbeiros')" style="cursor:pointer" title="Alterar plano">
+      <div class="trial-icon">{% include 'core/_icon.html' with name='clock' %}</div>
+      <div>
+        <div class="trial-text">Período de teste</div>
+        <div class="trial-dias">{{ dias_trial }} dia{{ dias_trial|pluralize }} restante{{ dias_trial|pluralize }}</div>
+      </div>
+    </div>
+    {% elif plano == 'pro' %}
+    <div class="trial-sidebar-badge" onclick="abrirUpgradeModal('barbeiros')" style="cursor:pointer;border-color:rgba(99,102,241,.35);background:rgba(99,102,241,.08)" title="Alterar plano">
+      <div class="trial-icon" style="color:#818CF8">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div>
+        <div class="trial-text" style="color:#A5B4FC;font-weight:700">Plano Pro</div>
+        <div class="trial-dias">Toque para alterar plano</div>
+      </div>
+    </div>
+    {% elif plano == 'max' or plano == 'ativo' %}
+    <div class="trial-sidebar-badge" onclick="abrirUpgradeModal('barbeiros')" style="cursor:pointer;border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.08)" title="Alterar plano">
+      <div class="trial-icon" style="color:#A78BFA">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      </div>
+      <div>
+        <div class="trial-text" style="color:#C4B5FD;font-weight:700">Plano Max</div>
+        <div class="trial-dias">Toque para alterar plano</div>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="breadcrumb">
+        <span class="bc-home">{% include 'core/_icon.html' with name='home' %}</span>
+        <span class="bc-overview">Visão Geral</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">{% block page_title %}Dashboard{% endblock %}</span>
+      </nav>
+
+      <div class="topbar-search">
+        <span class="search-icon">{% include 'core/_icon.html' with name='search' %}</span>
+        <input type="text" id="topbar-search" placeholder="Buscar..." autocomplete="off">
+      </div>
+
+      <div class="topbar-right">
+        {% if plano == 'trial' and dias_trial <= 5 %}
+        <span class="trial-alert-badge">
+          {% include 'core/_icon.html' with name='alert' %} {{ dias_trial }}d teste
+        </span>
+        {% endif %}
+        <!-- Botão alternar tema -->
+        <button class="theme-toggle-btn" id="themeToggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+          <!-- Lua — tema escuro ativo -->
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- Sol — tema claro ativo -->
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+
+
+  <!-- ── Banner PWA: Adicionar à Tela Inicial ── -->
+  <div id="pwaBanner" style="
+    display:none;position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);
+    z-index:9998;width:calc(100% - 2rem);max-width:400px;
+    background:linear-gradient(135deg,#1a1040 0%,#0f0a24 100%);
+    border:1px solid rgba(99,102,241,.35);border-radius:18px;
+    box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(99,102,241,.15);
+    padding:1rem 1.2rem;animation:slideUp .35s cubic-bezier(.34,1.56,.64,1) both;
+  ">
+    <style>
+      @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    </style>
+    <!-- Cabeçalho -->
+    <div style="display:flex;align-items:center;gap:.9rem">
+      <img src="{% static 'img/icon-192.png' %}" alt="Barber Metric"
+           style="width:48px;height:48px;border-radius:12px;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,.4)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.95rem;color:#F0F0F8;letter-spacing:-.2px">Barber Metric</div>
+        <div style="font-size:.8rem;color:#9090C0;margin-top:.15rem;line-height:1.4">Adicionar à tela inicial para acesso rápido</div>
+      </div>
+      <button id="pwaDismiss" style="
+        background:transparent;border:none;cursor:pointer;padding:.4rem;
+        color:#7070A0;line-height:0;border-radius:8px;transition:color .15s;flex-shrink:0;
+      " aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Instrução iOS (oculta inicialmente) -->
+    <div id="pwaIosHint" style="display:none;margin-top:.85rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:.8rem 1rem">
+      <div style="display:flex;align-items:center;gap:.55rem;margin-bottom:.55rem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span style="font-size:.82rem;font-weight:700;color:#A5B4FC">1. Toque em Compartilhar</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span style="font-size:.82rem;font-weight:700;color:#A5B4FC">2. "Adicionar à Tela de Início"</span>
+      </div>
+      <div style="margin-top:.6rem;font-size:.75rem;color:#7070A0;text-align:center">
+        O ícone do app aparecerá na sua tela inicial ↓
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div style="display:flex;gap:.65rem;margin-top:.9rem">
+      <button id="pwaInstall" style="
+        flex:1;padding:.72rem;border-radius:12px;border:none;cursor:pointer;
+        background:linear-gradient(135deg,#6366F1,#8B5CF6);
+        color:#fff;font-weight:700;font-size:.88rem;font-family:inherit;
+        box-shadow:0 4px 16px rgba(99,102,241,.4);transition:opacity .15s;
+      ">Adicionar à tela inicial</button>
+      <button id="pwaDismiss2" style="
+        padding:.72rem 1rem;border-radius:12px;cursor:pointer;font-family:inherit;
+        border:1.5px solid rgba(255,255,255,.1);background:transparent;
+        color:#9090C0;font-size:.88rem;font-weight:600;transition:all .15s;
+      ">Agora não</button>
+    </div>
+  </div>
+
+  <!-- ── Modal de Upgrade de Plano ── -->
+  {% for msg in messages %}{% if 'upgrade' in msg.tags %}
+  <div id="upgradeOverlay" style="
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,0,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;padding:1.25rem;
+    animation:fadeInUp .25s ease both;
+  ">
+    <div style="
+      background:#0F0F1C;border:1px solid rgba(99,102,241,.3);
+      border-radius:18px;width:100%;max-width:480px;
+      box-shadow:0 0 80px rgba(99,102,241,.18),0 24px 60px rgba(0,0,0,.6);
+      overflow:hidden;position:relative;
+      animation:slideUpModal .28s cubic-bezier(.4,0,.2,1) both;
+    ">
+      <!-- Top bar gradiente -->
+      <div style="height:3px;background:linear-gradient(90deg,#6366F1,#8B5CF6,#A855F7)"></div>
+
+      <div style="padding:1.75rem 1.75rem 0">
+        <!-- Ícone + título -->
+        <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.25rem">
+          <div style="
+            width:48px;height:48px;border-radius:14px;flex-shrink:0;
+            background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.1));
+            border:1px solid rgba(99,102,241,.3);
+            display:flex;align-items:center;justify-content:center;
+          ">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#lockGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <defs><linearGradient id="lockGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#A855F7"/></linearGradient></defs>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:1.1rem;font-weight:800;color:#F0F0F8;letter-spacing:-.3px;margin-bottom:.2rem">
+              Limite do plano atingido
+            </div>
+            <div id="upgradeSubtitle" style="font-size:.85rem;color:#7070A0;line-height:1.5"></div>
+          </div>
+        </div>
+
+        <!-- Tabela de planos -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1.4rem">
+
+          <!-- Trial -->
+          <div style="
+            border-radius:10px;padding:.9rem .8rem;text-align:center;
+            border:1.5px solid {% if plano == 'trial' %}rgba(99,102,241,.5){% else %}#1E1E32{% endif %};
+            background:{% if plano == 'trial' %}rgba(99,102,241,.07){% else %}#14142A{% endif %};
+            position:relative;
+          ">
+            {% if plano == 'trial' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(99,102,241,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#A5B4FC;padding:.15rem .5rem;white-space:nowrap">Seu plano</div>{% endif %}
+            <div style="font-size:.62rem;font-weight:700;color:#4ADE80;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem">Trial</div>
+            <div style="font-size:1rem;font-weight:800;color:#F0F0F8;margin-bottom:.6rem">Grátis<br><span style="font-size:.65rem;font-weight:400;color:#7070A0">30 dias</span></div>
+            <div style="font-size:.7rem;color:#7070A0;line-height:1.7;text-align:left">
+              <div>10 clientes</div>
+              <div>1 barbeiro</div>
+              <div>4 serviços</div>
+              <div>4 produtos</div>
+            </div>
+          </div>
+
+          <!-- Pro -->
+          <div style="
+            border-radius:10px;padding:.9rem .8rem;text-align:center;
+            border:1.5px solid {% if plano == 'pro' %}rgba(99,102,241,.5){% else %}#1E1E32{% endif %};
+            background:{% if plano == 'pro' %}rgba(99,102,241,.07){% else %}#14142A{% endif %};
+            position:relative;
+          ">
+            {% if plano == 'pro' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(99,102,241,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#A5B4FC;padding:.15rem .5rem;white-space:nowrap">Seu plano</div>{% endif %}
+            <div style="font-size:.62rem;font-weight:700;color:#A5B4FC;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem">Pro</div>
+            <div style="font-size:1rem;font-weight:800;color:#F0F0F8;margin-bottom:.6rem">R$14,90<br><span style="font-size:.65rem;font-weight:400;color:#7070A0">/mês</span></div>
+            <div style="font-size:.7rem;color:#7070A0;line-height:1.7;text-align:left">
+              <div>100 clientes</div>
+              <div>2 barbeiros</div>
+              <div>6 serviços</div>
+              <div>6 produtos</div>
+            </div>
+          </div>
+
+          <!-- Max -->
+          <div style="
+            border-radius:10px;padding:.9rem .8rem;text-align:center;
+            border:1.5px solid {% if plano == 'max' or plano == 'ativo' %}rgba(139,92,246,.5){% else %}rgba(139,92,246,.25){% endif %};
+            background:{% if plano == 'max' or plano == 'ativo' %}rgba(139,92,246,.07){% else %}rgba(139,92,246,.04){% endif %};
+            position:relative;
+          ">
+            {% if plano == 'max' or plano == 'ativo' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(139,92,246,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#C4B5FD;padding:.15rem .5rem;white-space:nowrap">Seu plano</div>{% endif %}
+            <div style="font-size:.62rem;font-weight:700;color:#C4B5FD;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem">Max</div>
+            <div style="font-size:1rem;font-weight:800;color:#F0F0F8;margin-bottom:.6rem">R$34,90<br><span style="font-size:.65rem;font-weight:400;color:#7070A0">/mês</span></div>
+            <div style="font-size:.7rem;color:#7070A0;line-height:1.7;text-align:left">
+              <div>1.000 clientes</div>
+              <div>20 barbeiros</div>
+              <div>20 serviços</div>
+              <div>20 produtos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div style="padding:0 1.75rem 1.75rem;display:flex;flex-direction:column;gap:.6rem">
+        <a href="{% url 'pagamento' %}" style="
+          display:flex;align-items:center;justify-content:center;gap:.45rem;
+          width:100%;padding:.95rem;border-radius:10px;
+          background:linear-gradient(135deg,#6366F1,#8B5CF6);
+          color:#fff;font-weight:800;font-size:.95rem;
+          text-decoration:none;transition:all .2s;
+          box-shadow:0 4px 20px rgba(99,102,241,.3);
+        " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 8px 28px rgba(99,102,241,.45)'"
+           onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(99,102,241,.3)'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Fazer upgrade agora
+        </a>
+        <button onclick="document.getElementById('upgradeOverlay').remove()" style="
+          background:none;border:none;color:#7070A0;font-size:.85rem;
+          cursor:pointer;font-family:inherit;padding:.4rem;
+          transition:color .18s;
+        " onmouseover="this.style.color='#F0F0F8'" onmouseout="this.style.color='#7070A0'">
+          Continuar no plano atual
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var motivo = '{{ msg }}';
+    var textos = {
+      'barbeiros': 'Você atingiu o limite de barbeiros do seu plano. Faça upgrade para adicionar mais membros à equipe.',
+      'servicos':  'Você atingiu o limite de tipos de serviço do seu plano. Faça upgrade para cadastrar mais serviços.',
+      'produtos':  'Você atingiu o limite de tipos de produto do seu plano. Faça upgrade para cadastrar mais produtos.',
+      'clientes':  'Você atingiu o limite de clientes com nome do seu plano. Faça upgrade para cadastrar mais clientes.',
+    };
+    var el = document.getElementById('upgradeSubtitle');
+    if (el) el.textContent = textos[motivo] || 'Faça upgrade para desbloquear mais recursos.';
+
+    // Fecha ao clicar fora do card
+    document.getElementById('upgradeOverlay').addEventListener('click', function(e){
+      if (e.target === this) this.remove();
+    });
+  })();
+  </script>
+
+  <style>
+  @keyframes fadeInUp{from{opacity:0}to{opacity:1}}
+  @keyframes slideUpModal{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+  {% endif %}{% endfor %}
+
+  <!-- ── Modal Alterar Plano (sempre presente) ── -->
+  <div id="planoModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1.25rem">
+    <div style="background:#0F0F1C;border:1px solid rgba(99,102,241,.3);border-radius:18px;width:100%;max-width:480px;box-shadow:0 0 80px rgba(99,102,241,.18),0 24px 60px rgba(0,0,0,.6);overflow:hidden;position:relative;animation:slideUpModal .28s cubic-bezier(.4,0,.2,1) both">
+      <div style="height:3px;background:linear-gradient(90deg,#6366F1,#8B5CF6,#A855F7)"></div>
+      <div style="padding:1.5rem 1.75rem">
+
+        <!-- Título -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+          <div>
+            <div style="font-size:1.05rem;font-weight:800;color:#F0F0F8;letter-spacing:-.3px">Alterar Plano</div>
+            <div style="font-size:.8rem;color:#7070A0;margin-top:.2rem">Seu plano atual: <strong style="color:#A5B4FC">
+              {% if plano == 'trial' %}Teste Gratuito
+              {% elif plano == 'pro' %}Pro
+              {% elif plano == 'max' or plano == 'ativo' %}Max
+              {% else %}—{% endif %}
+            </strong></div>
+          </div>
+          <button onclick="fecharPlanoModal()" style="background:transparent;border:none;cursor:pointer;color:#7070A0;padding:.4rem;line-height:0;border-radius:8px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Cards de plano -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1.25rem">
+
+          <!-- Pro -->
+          <div style="position:relative;border-radius:14px;padding:1.1rem;border:1.5px solid {% if plano == 'pro' %}rgba(99,102,241,.6){% else %}#1E1E32{% endif %};background:{% if plano == 'pro' %}rgba(99,102,241,.08){% else %}#14142A{% endif %}">
+            {% if plano == 'pro' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(99,102,241,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#A5B4FC;padding:.15rem .5rem;white-space:nowrap">Plano atual</div>{% endif %}
+            <div style="font-size:.65rem;font-weight:700;color:#818CF8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Pro</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#F0F0F8;letter-spacing:-1px;line-height:1">R$14<span style="font-size:.75rem;font-weight:400;color:#7070A0">,90/mês</span></div>
+            <div style="font-size:.72rem;color:#7070A0;margin:.55rem 0 .8rem;line-height:1.5">2 barbeiros · 100 clientes · 6 serviços</div>
+            {% if plano != 'pro' %}
+            <a href="{% url 'pagamento' %}?plano=pro" style="display:block;text-align:center;padding:.6rem;border-radius:10px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:#fff;font-weight:700;font-size:.82rem;text-decoration:none">
+              {% if plano == 'max' or plano == 'ativo' %}Fazer downgrade{% else %}Assinar Pro{% endif %}
+            </a>
+            {% else %}
+            <div style="text-align:center;padding:.6rem;border-radius:10px;background:rgba(99,102,241,.12);color:#818CF8;font-weight:700;font-size:.82rem">Plano atual</div>
+            {% endif %}
+          </div>
+
+          <!-- Max -->
+          <div style="position:relative;border-radius:14px;padding:1.1rem;border:1.5px solid {% if plano == 'max' or plano == 'ativo' %}rgba(139,92,246,.6){% else %}rgba(139,92,246,.25){% endif %};background:{% if plano == 'max' or plano == 'ativo' %}rgba(139,92,246,.08){% else %}rgba(139,92,246,.04){% endif %}">
+            {% if plano == 'max' or plano == 'ativo' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(139,92,246,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#C4B5FD;padding:.15rem .5rem;white-space:nowrap">Plano atual</div>{% endif %}
+            <div style="font-size:.65rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Max</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#F0F0F8;letter-spacing:-1px;line-height:1">R$34<span style="font-size:.75rem;font-weight:400;color:#7070A0">,90/mês</span></div>
+            <div style="font-size:.72rem;color:#7070A0;margin:.55rem 0 .8rem;line-height:1.5">20 barbeiros · 1000 clientes · 20 serviços</div>
+            {% if plano != 'max' and plano != 'ativo' %}
+            <a href="{% url 'pagamento' %}?plano=max" style="display:block;text-align:center;padding:.6rem;border-radius:10px;background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;font-weight:700;font-size:.82rem;text-decoration:none">
+              Assinar Max
+            </a>
+            {% else %}
+            <div style="text-align:center;padding:.6rem;border-radius:10px;background:rgba(139,92,246,.12);color:#A78BFA;font-weight:700;font-size:.82rem">Plano atual</div>
+            {% endif %}
+          </div>
+
+        </div>
+
+        <button onclick="fecharPlanoModal()" style="width:100%;padding:.8rem;border-radius:12px;border:1px solid #1E1E32;background:transparent;color:#7070A0;font-weight:600;font-size:.88rem;font-family:inherit;cursor:pointer">
+          Continuar no plano atual
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/main.js' %}?v=1.1"></script>
+  {% block extra_js %}{% endblock %}
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("{% static 'js/sw.js' %}").catch(() => { });
+    }
+
+    // ── Modal Alterar Plano ──
+    function abrirUpgradeModal() {
+      var m = document.getElementById('planoModal');
+      if (m) { m.style.display = 'flex'; }
+    }
+    function fecharPlanoModal() {
+      var m = document.getElementById('planoModal');
+      if (m) { m.style.display = 'none'; }
+    }
+    (function(){
+      var m = document.getElementById('planoModal');
+      if (m) m.addEventListener('click', function(e){ if (e.target === this) fecharPlanoModal(); });
+    })();
+
+    (function() {
+      const inp = document.getElementById('topbar-search');
+      if (!inp) return;
+      inp.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.data-table tbody tr').forEach(function(row) {
+          row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    })();
+
+    // ── PWA: Prompt de instalação ──
+    (function(){
+      var deferredPrompt = null;
+      var banner = document.getElementById('pwaBanner');
+      var btnInstall  = document.getElementById('pwaInstall');
+      var btnDismiss  = document.getElementById('pwaDismiss');
+      var btnDismiss2 = document.getElementById('pwaDismiss2');
+
+      var isMobile   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      var dismissed  = localStorage.getItem('pwaDismissed');  // localStorage persiste entre sessões
+      var shouldPrompt = isMobile && !standalone && !dismissed;
+
+      // Captura prompt nativo Android/Chrome (funciona em HTTPS ou localhost)
+      window.addEventListener('beforeinstallprompt', function(e){
+        e.preventDefault();
+        deferredPrompt = e;
+        if (shouldPrompt) showBanner();
+      });
+
+      // Mostra banner após 4 segundos em qualquer página do app (mobile não instalado)
+      if (shouldPrompt) {
+        setTimeout(showBanner, 4000);
+      }
+
+      function showBanner(){
+        if (!banner || banner.style.display === 'flex' || banner.style.display === 'block') return;
+        banner.style.display = 'block';
+      }
+
+      function hideBanner(){
+        if (!banner) return;
+        banner.style.display = 'none';
+        localStorage.setItem('pwaDismissed', '1');
+      }
+
+      if (btnInstall) btnInstall.addEventListener('click', function(){
+        if (deferredPrompt) {
+          // Android Chrome nativo
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(){ hideBanner(); deferredPrompt = null; });
+        } else {
+          // iOS ou Android sem HTTPS — mostra instrução no próprio card
+          var hint = document.getElementById('pwaIosHint');
+          if (hint) hint.style.display = 'block';
+          btnInstall.style.display = 'none';
+        }
+      });
+
+      if (btnDismiss)  btnDismiss.addEventListener('click',  hideBanner);
+      if (btnDismiss2) btnDismiss2.addEventListener('click', hideBanner);
+    })();
+
+    // ── Alternador de tema ──
+    (function(){
+      var btn = document.getElementById('themeToggle');
+      if (!btn) return;
+      btn.addEventListener('click', function(){
+        var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('bm-theme', next);
+      });
+    })();
+  </script>
+</body>
+
+</html>

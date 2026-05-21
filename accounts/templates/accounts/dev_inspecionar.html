@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inspecionar — {{ b.nome }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#08080F;color:#E0E0F0;font-family:'Outfit',sans-serif;padding:2rem 1.5rem;min-height:100vh}
+    a{color:#818CF8;text-decoration:none}
+    a:hover{color:#A5B4FC}
+
+    .top-bar{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+    .back-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:10px;border:1px solid #1E1E32;color:#9090C0;font-size:.85rem;font-weight:600;transition:all .18s}
+    .back-btn:hover{border-color:#6366F1;color:#A5B4FC}
+    .page-title{font-size:1.4rem;font-weight:800;color:#F0F0F8;letter-spacing:-.4px}
+    .page-sub{font-size:.85rem;color:#7070A0;margin-top:.15rem}
+
+    /* Plano badge */
+    .badge{display:inline-flex;align-items:center;padding:.25rem .7rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.3px}
+    .badge-trial{background:rgba(99,102,241,.15);color:#A5B4FC;border:1px solid rgba(99,102,241,.3)}
+    .badge-pro{background:rgba(99,102,241,.15);color:#A5B4FC;border:1px solid rgba(99,102,241,.3)}
+    .badge-max{background:rgba(139,92,246,.15);color:#C4B5FD;border:1px solid rgba(139,92,246,.3)}
+    .badge-suspenso{background:rgba(245,158,11,.1);color:#FCD34D;border:1px solid rgba(245,158,11,.3)}
+    .badge-cancelado{background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)}
+
+    /* Grid de stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+    @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
+    .stat-card{background:#0F0F1C;border:1px solid #1E1E32;border-radius:14px;padding:1.5rem 1.6rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#6366F1)}
+    .stat-label{font-size:.75rem;font-weight:700;color:#5050A0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem}
+    .stat-value{font-size:2.6rem;font-weight:800;color:#F0F0F8;letter-spacing:-1.5px;line-height:1}
+    .stat-sub{font-size:.78rem;color:#5050A0;margin-top:.4rem}
+
+    /* Seções */
+    .section{background:#0F0F1C;border:1px solid #1E1E32;border-radius:16px;margin-bottom:1.25rem;overflow:hidden}
+    .section-header{padding:1rem 1.4rem;border-bottom:1px solid #1A1A2E;display:flex;align-items:center;gap:.6rem}
+    .section-header h3{font-size:.95rem;font-weight:700;color:#E0E0F0}
+    .section-header .count{font-size:.72rem;font-weight:700;background:#1A1A2E;color:#7070A0;padding:.2rem .55rem;border-radius:999px}
+    .section-body{padding:1.1rem 1.4rem}
+
+    /* Info conta */
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem}
+    .info-row{display:flex;flex-direction:column;gap:.2rem}
+    .info-lbl{font-size:.68rem;font-weight:700;color:#5050A0;text-transform:uppercase;letter-spacing:.5px}
+    .info-val{font-size:.9rem;color:#D0D0E8;font-weight:500}
+
+    /* Tabela simples */
+    .simple-table{width:100%;border-collapse:collapse}
+    .simple-table th{font-size:.68rem;font-weight:700;color:#5050A0;text-transform:uppercase;letter-spacing:.5px;padding:.5rem .75rem;text-align:left;border-bottom:1px solid #1A1A2E}
+    .simple-table td{font-size:.85rem;color:#C0C0D8;padding:.6rem .75rem;border-bottom:1px solid #0F0F1C}
+    .simple-table tr:last-child td{border-bottom:none}
+    .simple-table tr:hover td{background:rgba(99,102,241,.04)}
+
+    /* Barra de uso */
+    .usage-bar{background:#1A1A2E;border-radius:999px;height:8px;overflow:hidden;margin-top:.4rem}
+    .usage-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#6366F1,#8B5CF6);transition:width .4s ease}
+
+    .empty-row{text-align:center;color:#404060;font-size:.85rem;padding:1.5rem}
+
+    @media(max-width:600px){
+      body{padding:1.25rem 1rem}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a href="/dev/" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar
+    </a>
+    <div>
+      <div class="page-title">{{ b.nome }}</div>
+      <div class="page-sub">{{ b.user.email }} &middot; Cadastrado em {{ b.data_cadastro|date:"d/m/Y" }}</div>
+    </div>
+    {% if b.plano == 'trial' %}<span class="badge badge-trial">Trial</span>
+    {% elif b.plano == 'pro' %}<span class="badge badge-pro">Pro</span>
+    {% elif b.plano == 'max' or b.plano == 'ativo' %}<span class="badge badge-max">Max</span>
+    {% elif b.plano == 'suspenso' %}<span class="badge badge-suspenso">Suspenso</span>
+    {% elif b.plano == 'cancelado' %}<span class="badge badge-cancelado">Cancelado</span>{% endif %}
+  </div>
+
+  <!-- Stats principais -->
+  <div class="stats-grid">
+    <div class="stat-card" style="--c:#6366F1">
+      <div class="stat-label">Barbeiros</div>
+      <div class="stat-value">{{ info.barbeiros_ativos }}</div>
+      <div class="stat-sub">{{ info.barbeiros_total }} cadastrados</div>
+    </div>
+    <div class="stat-card" style="--c:#10B981">
+      <div class="stat-label">Clientes</div>
+      <div class="stat-value">{{ info.clientes_total }}</div>
+      <div class="stat-sub">com nome cadastrado</div>
+    </div>
+    <div class="stat-card" style="--c:#F59E0B">
+      <div class="stat-label">Serviços</div>
+      <div class="stat-value">{{ info.servicos_total }}</div>
+      <div class="stat-sub">tipos cadastrados</div>
+    </div>
+    <div class="stat-card" style="--c:#8B5CF6">
+      <div class="stat-label">Produtos</div>
+      <div class="stat-value">{{ info.produtos_total }}</div>
+      <div class="stat-sub">tipos cadastrados</div>
+    </div>
+    <div class="stat-card" style="--c:#EC4899">
+      <div class="stat-label">Atendimentos</div>
+      <div class="stat-value">{{ info.atendimentos_total }}</div>
+      <div class="stat-sub">{{ info.atendimentos_mes }} este mês</div>
+    </div>
+    <div class="stat-card" style="--c:#06B6D4">
+      <div class="stat-label">Vendas Produto</div>
+      <div class="stat-value">{{ info.vendas_total }}</div>
+      <div class="stat-sub">transações</div>
+    </div>
+    <div class="stat-card" style="--c:#4ADE80">
+      <div class="stat-label">Fat. Serviços</div>
+      <div class="stat-value" style="font-size:1.3rem">R${{ info.faturamento_servicos|floatformat:2 }}</div>
+      <div class="stat-sub">total registrado</div>
+    </div>
+    <div class="stat-card" style="--c:#F97316">
+      <div class="stat-label">Fat. Geral</div>
+      <div class="stat-value" style="font-size:1.3rem">R${{ info.faturamento_geral|floatformat:2 }}</div>
+      <div class="stat-sub">serviços + produtos</div>
+    </div>
+    <div class="stat-card" style="--c:#94A3B8;grid-column:span 2">
+      <div class="stat-label">Armazenamento estimado</div>
+      <div class="stat-value" style="font-size:1.6rem">{{ info.armazenamento_fmt }}</div>
+      <div class="stat-sub" style="margin-bottom:.6rem">baseado no volume de registros no banco de dados</div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;font-size:.75rem;color:#5050A0">
+        <span>Barbeiros: {{ info.barbeiros_total }} × 180B</span>
+        <span>Clientes: {{ info.clientes_total }} × 320B</span>
+        <span>Atendimentos: {{ info.atendimentos_total }} × 480B</span>
+        <span>Serviços: {{ info.servicos_total }} × 220B</span>
+        <span>Produtos: {{ info.produtos_total }} × 200B</span>
+        <span>Vendas: {{ info.vendas_total }} × 300B</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uso dos limites do plano -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      <h3>Uso dos limites do plano</h3>
+    </div>
+    <div class="section-body">
+      <div style="display:flex;flex-direction:column;gap:1.1rem">
+
+        {% for item in barras_plano %}
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+            <span style="font-size:.8rem;color:#9090C0;font-weight:600">{{ item.label }}</span>
+            <span style="font-size:.8rem;font-weight:700;color:{% if item.pct >= 90 %}#F87171{% elif item.pct >= 70 %}#FCD34D{% else %}#4ADE80{% endif %}">{{ item.valor }} / {{ item.limite }}</span>
+          </div>
+          <div class="usage-bar">
+            <div class="usage-fill" style="width:{{ item.pct }}%;background:{% if item.pct >= 90 %}linear-gradient(90deg,#EF4444,#F87171){% elif item.pct >= 70 %}linear-gradient(90deg,#F59E0B,#FCD34D){% else %}{{ item.cor }}{% endif %}"></div>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Informações da conta -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <h3>Informações da Conta</h3>
+    </div>
+    <div class="section-body">
+      <div class="info-grid">
+        <div class="info-row"><div class="info-lbl">Proprietário</div><div class="info-val">{{ b.user.get_full_name|default:b.user.username }}</div></div>
+        <div class="info-row"><div class="info-lbl">E-mail</div><div class="info-val">{{ b.user.email }}</div></div>
+        <div class="info-row"><div class="info-lbl">Telefone</div><div class="info-val">{{ b.telefone|default:"—" }}</div></div>
+        <div class="info-row"><div class="info-lbl">Cidade</div><div class="info-val">{{ b.cidade|default:"—" }}</div></div>
+        <div class="info-row"><div class="info-lbl">E-mail verificado</div><div class="info-val">{% if b.email_verificado %}✅ Sim{% else %}❌ Não{% endif %}</div></div>
+        <div class="info-row"><div class="info-lbl">Conta ativa</div><div class="info-val">{% if b.ativo %}✅ Sim{% else %}❌ Bloqueada{% endif %}</div></div>
+        <div class="info-row"><div class="info-lbl">Data de cadastro</div><div class="info-val">{{ b.data_cadastro|date:"d/m/Y H:i" }}</div></div>
+        <div class="info-row"><div class="info-lbl">Último atendimento</div><div class="info-val">{% if info.ultimo_atendimento %}{{ info.ultimo_atendimento.data|date:"d/m/Y H:i" }}{% else %}—{% endif %}</div></div>
+        <div class="info-row"><div class="info-lbl">Dias de trial</div><div class="info-val">{{ b.dias_restantes_trial }} restantes</div></div>
+        <div class="info-row"><div class="info-lbl">Pagamentos MP</div><div class="info-val">{{ info.pagamentos_total }} ({{ info.pagamentos_aprovados }} aprovados)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barbeiros -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <h3>Barbeiros</h3>
+      <span class="count">{{ info.barbeiros_total }}</span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <table class="simple-table">
+        <thead><tr><th>Nome</th><th>Status</th><th>Clientes vinculados</th><th>Atendimentos</th></tr></thead>
+        <tbody>
+          {% for bar in barbeiros %}
+          <tr>
+            <td>{{ bar.nome }}</td>
+            <td>{% if bar.ativo %}<span style="color:#4ADE80;font-size:.75rem;font-weight:700">Ativo</span>{% else %}<span style="color:#6060A0;font-size:.75rem;font-weight:700">Inativo</span>{% endif %}</td>
+            <td>{{ bar.clientes.count }}</td>
+            <td>{{ bar.atendimentos.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty-row">Nenhum barbeiro cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Serviços -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <h3>Serviços</h3>
+      <span class="count">{{ info.servicos_total }}</span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <table class="simple-table">
+        <thead><tr><th>Nome</th><th>Preço</th><th>Duração</th><th>Ativo</th></tr></thead>
+        <tbody>
+          {% for s in servicos %}
+          <tr>
+            <td>{{ s.nome }}</td>
+            <td>R$ {{ s.preco|floatformat:2 }}</td>
+            <td>{{ s.duracao_minutos|default:"—" }} min</td>
+            <td>{% if s.ativo %}✅{% else %}❌{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty-row">Nenhum serviço cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Produtos -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <h3>Produtos</h3>
+      <span class="count">{{ info.produtos_total }}</span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <table class="simple-table">
+        <thead><tr><th>Nome</th><th>Preço</th><th>Estoque</th><th>Ativo</th></tr></thead>
+        <tbody>
+          {% for p in produtos %}
+          <tr>
+            <td>{{ p.nome }}</td>
+            <td>R$ {{ p.preco|floatformat:2 }}</td>
+            <td>{{ p.estoque|default:"—" }}</td>
+            <td>{% if p.ativo %}✅{% else %}❌{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty-row">Nenhum produto cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Últimos pagamentos MP -->
+  <div class="section">
+    <div class="section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <h3>Últimos Pagamentos MP</h3>
+      <span class="count">{{ info.pagamentos_total }}</span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <table class="simple-table">
+        <thead><tr><th>ID</th><th>Plano</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead>
+        <tbody>
+          {% for pg in pagamentos %}
+          <tr>
+            <td style="font-family:monospace;font-size:.78rem;color:#7070A0">{{ pg.payment_id }}</td>
+            <td>{{ pg.plano_escolhido|upper }}</td>
+            <td>R$ {{ pg.valor|floatformat:2 }}</td>
+            <td>
+              {% if pg.status == 'approved' %}<span style="color:#4ADE80;font-weight:700;font-size:.78rem">Aprovado</span>
+              {% elif pg.status == 'pending' %}<span style="color:#FCD34D;font-weight:700;font-size:.78rem">Pendente</span>
+              {% elif pg.status == 'rejected' %}<span style="color:#F87171;font-weight:700;font-size:.78rem">Rejeitado</span>
+              {% else %}<span style="color:#6060A0;font-size:.78rem">{{ pg.status }}</span>{% endif %}
+            </td>
+            <td style="color:#6060A0;font-size:.8rem">{{ pg.criado_em|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="empty-row">Nenhum pagamento registrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

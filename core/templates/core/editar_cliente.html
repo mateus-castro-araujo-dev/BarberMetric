@@ -1,0 +1,25 @@
+﻿{% extends 'core/base.html' %}
+{% block title %}Editar Cliente — Barber Metric{% endblock %}
+{% block page_title %}Editar Cliente{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:480px">
+  <div class="card-header"><h2 class="card-title">Editar {{ cliente.nome }}</h2></div>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input type="text" name="nome" class="form-input" value="{{ cliente.nome }}" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefone</label>
+      <input type="text" name="telefone" class="form-input" value="{{ cliente.telefone }}">
+    </div>
+    <div class="form-actions" style="padding:0 1.25rem 1.25rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+      <button type="submit" class="btn-submit" style="flex:1;">Salvar</button>
+      <a href="{% url 'lista_clientes' %}" class="btn-outline" style="flex:1; justify-content:center;">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

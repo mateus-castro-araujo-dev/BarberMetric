@@ -1,0 +1,206 @@
+﻿{% extends 'core/base.html' %}
+{% block title %}Fila & Status — Barber Metric{% endblock %}
+{% block page_title %}Fila / Status{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Status: <strong>{% if status.aberto %}Aberta agora{% else %}Fechada{% endif %}</strong></span>
+  </div>
+  <h1 class="live-title">
+    Fila ao Vivo
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='list' %}</span>
+  </h1>
+</div>
+
+<!-- Toggle aberto/fechado -->
+<div class="card status-toggle-card" style="margin-bottom:1.5rem">
+  <div class="status-toggle-row">
+    <div>
+      <div class="status-label">Status da Barbearia</div>
+      <div class="status-value {% if status.aberto %}aberto{% else %}fechado{% endif %}">
+        {% if status.aberto %}Aberta{% else %}Fechada{% endif %}
+      </div>
+    </div>
+    <button class="toggle-btn {% if status.aberto %}on{% endif %}" id="toggle-aberto" onclick="toggleAberto()">
+      <span class="toggle-knob"></span>
+    </button>
+  </div>
+</div>
+
+<!-- Toggle exibir horários no status público -->
+<div class="card status-toggle-card" style="margin-bottom:1.5rem">
+  <div class="status-toggle-row">
+    <div>
+      <div class="status-label">Horários na tela pública</div>
+      <div class="status-value {% if status.mostrar_horarios %}aberto{% else %}fechado{% endif %}" id="horarios-value">
+        {% if status.mostrar_horarios %}Visível{% else %}Oculto{% endif %}
+      </div>
+    </div>
+    <button class="toggle-btn {% if status.mostrar_horarios %}on{% endif %}" id="toggle-horarios" onclick="toggleHorarios()">
+      <span class="toggle-knob"></span>
+    </button>
+  </div>
+</div>
+
+<!-- Cards estilo crypto para fila -->
+<div class="crypto-cards">
+  <div class="crypto-card c-red">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-red">{% include 'core/_icon.html' with name='scissors' %}</div>
+        <div>
+          <div class="cc-pair">ATIVO/AGORA</div>
+          <div class="cc-name">Cortando</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Em atendimento</div>
+    <div class="cc-value" id="num-cortando">{{ status.cortando }}</div>
+    <div class="fila-controls" style="margin-top:.8rem">
+      <button class="fila-btn" onclick="mudarFila('cortando',-1)">{% include 'core/_icon.html' with name='minus' %}</button>
+      <button class="fila-btn" onclick="mudarFila('cortando',1)">{% include 'core/_icon.html' with name='plus' %}</button>
+    </div>
+  </div>
+
+  <div class="crypto-card c-indigo">
+    <div class="cc-top">
+      <div class="cc-logo-row">
+        <div class="cc-logo l-indigo">{% include 'core/_icon.html' with name='clock' %}</div>
+        <div>
+          <div class="cc-pair">AGUARDANDO</div>
+          <div class="cc-name">Na espera</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cc-label">Pessoas aguardando</div>
+    <div class="cc-value" id="num-espera">{{ status.espera }}</div>
+    <div class="fila-controls" style="margin-top:.8rem">
+      <button class="fila-btn" onclick="mudarFila('espera',-1)">{% include 'core/_icon.html' with name='minus' %}</button>
+      <button class="fila-btn" onclick="mudarFila('espera',1)">{% include 'core/_icon.html' with name='plus' %}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link público -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='link' %} Link Público</h2></div>
+  <p style="color:var(--text-secondary);font-size:.9rem;padding:1rem 1.5rem 0">Compartilhe este link com seus clientes para que vejam o status em tempo real:</p>
+  <div class="link-box" style="margin-top:.85rem">
+    <span id="public-link">{{ request.scheme }}://{{ request.get_host }}/status/{{ barbearia.slug }}/</span>
+    <button onclick="copiarLink()" class="btn-outline compact">{% include 'core/_icon.html' with name='copy' %} Copiar</button>
+  </div>
+</div>
+
+<!-- Horários -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">{% include 'core/_icon.html' with name='clock' %} Horários de Funcionamento</h2>
+    <button class="btn-outline compact" onclick="salvarHorarios()">{% include 'core/_icon.html' with name='save' %} Salvar</button>
+  </div>
+  <div class="horarios-grid" id="horarios-form">
+    {% for dia in semana %}
+    <div class="horario-row" data-dia="{{ dia.dia }}">
+      <div class="horario-dia">
+        <label class="horario-toggle">
+          <input type="checkbox" class="dia-aberto" {% if dia.horario and dia.horario.aberto %}checked{% endif %}>
+          <span class="toggle-mini"></span>
+        </label>
+        <span class="dia-nome">{{ dia.nome }}</span>
+      </div>
+      <div class="horario-inputs">
+        <input type="time" class="form-input compact hora-field" data-campo="inicio_manha"
+          value="{{ dia.horario.inicio_manha|time:'H:i'|default:'' }}">
+        <span class="hora-sep">—</span>
+        <input type="time" class="form-input compact hora-field" data-campo="fim_manha"
+          value="{{ dia.horario.fim_manha|time:'H:i'|default:'' }}">
+        <span class="hora-sep">|</span>
+        <input type="time" class="form-input compact hora-field" data-campo="inicio_tarde"
+          value="{{ dia.horario.inicio_tarde|time:'H:i'|default:'' }}">
+        <span class="hora-sep">—</span>
+        <input type="time" class="form-input compact hora-field" data-campo="fim_tarde"
+          value="{{ dia.horario.fim_tarde|time:'H:i'|default:'' }}">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div id="horario-msg" style="display:none;color:var(--success-2);margin:0 1.5rem 1rem;font-size:.9rem">{% include 'core/_icon.html' with name='check-circle' %} Horários salvos!</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let filaState = { cortando: {{ status.cortando }}, espera: {{ status.espera }} };
+
+function mudarFila(campo, delta) {
+  filaState[campo] = Math.max(0, filaState[campo] + delta);
+  document.getElementById('num-' + campo).textContent = filaState[campo];
+  fetch("{% url 'salvar_fila' %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify(filaState)
+  });
+}
+
+function toggleAberto() {
+  fetch("{% url 'toggle_aberto' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(r => r.json())
+  .then(d => {
+    const btn = document.getElementById('toggle-aberto');
+    const val = document.querySelector('.status-value');
+    btn.classList.toggle('on', d.aberto);
+    val.textContent = d.aberto ? 'Aberta' : 'Fechada';
+    val.className = 'status-value ' + (d.aberto ? 'aberto' : 'fechado');
+  });
+}
+
+function salvarHorarios() {
+  const rows = document.querySelectorAll('.horario-row');
+  const data = [];
+  rows.forEach(row => {
+    const dia = parseInt(row.dataset.dia);
+    const aberto = row.querySelector('.dia-aberto').checked;
+    const campos = {};
+    row.querySelectorAll('.hora-field').forEach(inp => campos[inp.dataset.campo] = inp.value || null);
+    data.push({ dia, aberto, ...campos });
+  });
+  fetch("{% url 'salvar_horarios' %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify(data)
+  }).then(() => {
+    const msg = document.getElementById('horario-msg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 2000);
+  });
+}
+
+function toggleHorarios() {
+  fetch("{% url 'toggle_mostrar_horarios' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(r => r.json())
+  .then(d => {
+    const btn = document.getElementById('toggle-horarios');
+    const val = document.getElementById('horarios-value');
+    btn.classList.toggle('on', d.mostrar_horarios);
+    val.textContent = d.mostrar_horarios ? 'Visível' : 'Oculto';
+    val.className = 'status-value ' + (d.mostrar_horarios ? 'aberto' : 'fechado');
+  });
+}
+
+function copiarLink() {
+  const link = document.getElementById('public-link').textContent;
+  navigator.clipboard.writeText(link).then(() => alert('Link copiado!'));
+}
+</script>
+{% endblock %}
+

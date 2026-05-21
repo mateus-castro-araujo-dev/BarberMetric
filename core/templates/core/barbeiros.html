@@ -1,0 +1,60 @@
+﻿{% extends 'core/base.html' %}
+{% block title %}Barbeiros — Barber Metric{% endblock %}
+{% block page_title %}Barbeiros{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Equipe: <strong>{{ lista_barbeiros|length }} barbeiro{{ lista_barbeiros|length|pluralize }}</strong></span>
+  </div>
+  <h1 class="live-title">
+    Gestão de Equipe
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='user' %}</span>
+  </h1>
+</div>
+
+<div class="card" style="max-width:600px;margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='plus' %} Adicionar Barbeiro</h2></div>
+  <form method="POST" action="{% url 'adicionar_barbeiro' %}" class="inline-form">
+    {% csrf_token %}
+    <input type="text" name="nome" class="form-input" placeholder="Nome do barbeiro" required>
+    <button type="submit" class="btn-submit compact">{% include 'core/_icon.html' with name='plus' %} Adicionar</button>
+  </form>
+</div>
+
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='users' %} Equipe ativa</div>
+      <div class="overview-title">Barbeiros Cadastrados</div>
+    </div>
+
+  </div>
+  <div class="card" style="max-width:600px">
+    {% if lista_barbeiros %}
+    <ul class="barbeiros-lista">
+      {% for b in lista_barbeiros %}
+      <li class="barbeiro-item">
+        <div class="barbeiro-avatar md">{{ b.nome|first|upper }}</div>
+        <span class="barbeiro-item-nome">{{ b.nome }}</span>
+        <div class="barbeiro-item-actions">
+          <a href="{% url 'trocar_barbeiro' b.pk %}" class="btn-outline compact {% if b == barbeiro_atual %}active{% endif %}">
+            {% if b == barbeiro_atual %}{% include 'core/_icon.html' with name='check' %} Ativo{% else %}Selecionar{% endif %}
+          </a>
+          <form method="POST" action="{% url 'excluir_barbeiro' b.pk %}" style="display:inline" onsubmit="return confirm('Excluir {{ b.nome }}?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-icon danger">{% include 'core/_icon.html' with name='trash' %}</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">Nenhum barbeiro cadastrado. Adicione o primeiro acima.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+

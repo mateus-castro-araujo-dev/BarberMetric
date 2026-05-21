@@ -1,0 +1,44 @@
+{% load math_filters %}
+<div style="display:flex;flex-direction:column;gap:1.1rem">
+
+  {% with pct=info.barbeiros_ativos|pct:lim_barbeiros %}
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+      <span style="font-size:.8rem;color:#9090C0;font-weight:600">Barbeiros</span>
+      <span style="font-size:.8rem;color:{% if pct >= 90 %}#F87171{% elif pct >= 70 %}#FCD34D{% else %}#4ADE80{% endif %};font-weight:700">{{ info.barbeiros_ativos }} / {{ lim_barbeiros }}</span>
+    </div>
+    <div class="usage-bar"><div class="usage-fill" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;background:{% if pct >= 90 %}linear-gradient(90deg,#EF4444,#F87171){% elif pct >= 70 %}linear-gradient(90deg,#F59E0B,#FCD34D){% else %}linear-gradient(90deg,#6366F1,#8B5CF6){% endif %}"></div></div>
+  </div>
+  {% endwith %}
+
+  {% with pct=info.clientes_total|pct:lim_clientes %}
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+      <span style="font-size:.8rem;color:#9090C0;font-weight:600">Clientes</span>
+      <span style="font-size:.8rem;color:{% if pct >= 90 %}#F87171{% elif pct >= 70 %}#FCD34D{% else %}#4ADE80{% endif %};font-weight:700">{{ info.clientes_total }} / {{ lim_clientes }}</span>
+    </div>
+    <div class="usage-bar"><div class="usage-fill" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;background:{% if pct >= 90 %}linear-gradient(90deg,#EF4444,#F87171){% elif pct >= 70 %}linear-gradient(90deg,#F59E0B,#FCD34D){% else %}linear-gradient(90deg,#10B981,#34D399){% endif %}"></div></div>
+  </div>
+  {% endwith %}
+
+  {% with pct=info.servicos_total|pct:lim_servicos %}
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+      <span style="font-size:.8rem;color:#9090C0;font-weight:600">Serviços</span>
+      <span style="font-size:.8rem;color:{% if pct >= 90 %}#F87171{% elif pct >= 70 %}#FCD34D{% else %}#4ADE80{% endif %};font-weight:700">{{ info.servicos_total }} / {{ lim_servicos }}</span>
+    </div>
+    <div class="usage-bar"><div class="usage-fill" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;background:{% if pct >= 90 %}linear-gradient(90deg,#EF4444,#F87171){% elif pct >= 70 %}linear-gradient(90deg,#F59E0B,#FCD34D){% else %}linear-gradient(90deg,#F59E0B,#FCD34D){% endif %}"></div></div>
+  </div>
+  {% endwith %}
+
+  {% with pct=info.produtos_total|pct:lim_produtos %}
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+      <span style="font-size:.8rem;color:#9090C0;font-weight:600">Produtos</span>
+      <span style="font-size:.8rem;color:{% if pct >= 90 %}#F87171{% elif pct >= 70 %}#FCD34D{% else %}#4ADE80{% endif %};font-weight:700">{{ info.produtos_total }} / {{ lim_produtos }}</span>
+    </div>
+    <div class="usage-bar"><div class="usage-fill" style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%;background:{% if pct >= 90 %}linear-gradient(90deg,#EF4444,#F87171){% elif pct >= 70 %}linear-gradient(90deg,#F59E0B,#FCD34D){% else %}linear-gradient(90deg,#8B5CF6,#A78BFA){% endif %}"></div></div>
+  </div>
+  {% endwith %}
+
+</div>

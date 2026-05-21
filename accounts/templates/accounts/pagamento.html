@@ -1,0 +1,867 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Assinar Barber Metric — Escolha seu Plano</title>
+  {% load static %}
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <meta name="theme-color" content="#6366F1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:2rem 1rem 3rem;background:var(--bg-page)}
+    body::before,body::after,.bg-glow,.sidebar,.sidebar-overlay,.mobile-nav,.topbar{display:none!important}
+    .pay-wrap{width:100%;max-width:520px;animation:slideIn .4s var(--ease) both}
+
+    /* Logo */
+    .pay-logo{text-align:center;margin-bottom:2rem}
+    .pay-logo-inner{display:inline-flex;align-items:center;gap:.7rem}
+    .pay-logo-pole{width:24px;height:38px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(255,255,255,.12);position:relative;flex-shrink:0}
+    .pay-logo-pole::before{content:'';position:absolute;top:-30px;bottom:-30px;left:-3px;right:-3px;background:repeating-linear-gradient(-45deg,#DC2626 0,#DC2626 5px,#fff 5px,#fff 10px,#6366F1 10px,#6366F1 15px);animation:pay-pole 1.2s linear infinite}
+    @keyframes pay-pole{from{transform:translateY(0)}to{transform:translateY(21.213px)}}
+    .pay-logo h1{font-size:1.65rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 30%,#C8C8F4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .pay-logo-sub{font-size:.75rem;color:var(--text-dim);font-weight:500;margin-top:.15rem}
+
+    /* Seletor de planos */
+    .planos-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1.5rem}
+    @media(max-width:460px){.planos-grid{grid-template-columns:1fr}}
+    .plano-card{
+      border-radius:var(--r);padding:1.3rem 1.2rem;
+      cursor:pointer;position:relative;overflow:hidden;
+      border:2px solid var(--border);
+      background:var(--bg-card);
+      transition:all .22s var(--ease);
+    }
+    .plano-card:hover{border-color:rgba(99,102,241,.4)}
+    .plano-card.selected{
+      border-color:var(--plano-color,#6366F1);
+      background:rgba(99,102,241,.06);
+      box-shadow:0 0 0 1px var(--plano-color,#6366F1), 0 4px 20px rgba(99,102,241,.15);
+    }
+    .plano-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:var(--plano-color,#6366F1);
+    }
+    .plano-card-pro{--plano-color:#6366F1}
+    .plano-card-max{--plano-color:#8B5CF6}
+    .plano-badge{
+      display:inline-flex;align-items:center;gap:.3rem;
+      font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+      background:rgba(99,102,241,.15);color:#A5B4FC;
+      padding:.22rem .6rem;border-radius:999px;margin-bottom:.7rem;
+    }
+    .plano-card-max .plano-badge{background:rgba(139,92,246,.15);color:#C4B5FD}
+    .plano-check{
+      position:absolute;top:.75rem;right:.75rem;
+      width:20px;height:20px;border-radius:50%;
+      border:2px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      transition:all .2s;
+    }
+    .plano-card.selected .plano-check{background:var(--plano-color,#6366F1);border-color:var(--plano-color,#6366F1)}
+    .plano-check::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;display:none}
+    .plano-card.selected .plano-check::after{display:block}
+    .plano-preco{font-size:2.2rem;font-weight:800;color:var(--text);letter-spacing:-1.5px;line-height:1}
+    .plano-preco span{font-size:.85rem;font-weight:400;color:var(--text-dim);letter-spacing:0}
+    .plano-nome{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.25rem}
+    .plano-features{display:flex;flex-direction:column;gap:.3rem;margin-top:.75rem}
+    .plano-feature{display:flex;align-items:flex-start;gap:.45rem;font-size:.78rem;color:var(--text-dim);line-height:1.4}
+    .plano-feature::before{content:'✓';color:#4ADE80;font-weight:800;font-size:.82rem;flex-shrink:0;margin-top:.05rem}
+
+    /* Seção MP */
+    .mp-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem}
+
+    /* Abas PIX / Cartão */
+    .pay-tabs{display:flex;border-bottom:1px solid var(--border)}
+    .pay-tab{
+      flex:1;padding:.9rem 1rem;font-size:.88rem;font-weight:700;
+      cursor:pointer;text-align:center;color:var(--text-dim);
+      border-bottom:2px solid transparent;margin-bottom:-1px;
+      transition:all .18s var(--ease);display:flex;align-items:center;justify-content:center;gap:.45rem;
+      background:none;border-top:none;border-left:none;border-right:none;
+      font-family:var(--font);
+    }
+    .pay-tab:hover{color:var(--text)}
+    .pay-tab.active{color:var(--text);border-bottom-color:#6366F1}
+    .pay-tab-panel{display:none;padding:1.25rem}
+    .pay-tab-panel.active{display:block}
+
+    /* Botão MP (PIX) */
+    .btn-mp{
+      width:100%;padding:1.1rem;border-radius:var(--r);border:none;cursor:pointer;
+      font-family:var(--font);font-size:1rem;font-weight:800;
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      transition:all .2s var(--ease);
+      background:linear-gradient(135deg,#009EE3,#0070BB);
+      color:#fff;box-shadow:0 4px 20px rgba(0,158,227,.25);
+      min-height:54px;-webkit-tap-highlight-color:transparent;
+    }
+    .btn-mp:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,158,227,.35)}
+    .btn-mp:active{transform:translateY(0)}
+    .btn-mp:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    /* QR code */
+    .qr-container{display:none;flex-direction:column;align-items:center;gap:1rem}
+    .qr-container.visible{display:flex}
+    .qr-img-wrap{background:#fff;border-radius:var(--r);padding:1rem;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+    .qr-img-wrap img{width:180px;height:180px;display:block}
+    .qr-timer{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text-dim)}
+    .qr-timer-dot{width:7px;height:7px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B981;animation:blink 2.4s infinite;flex-shrink:0}
+    .qr-instructions{font-size:.82rem;color:var(--text-dim);text-align:center;line-height:1.6}
+    .pix-copy-box{width:100%}
+    .pix-copy-label{font-size:.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem}
+    .pix-copy-row{display:flex;gap:.5rem;align-items:stretch}
+    .pix-code{
+      flex:1;background:var(--bg-input);border:1px solid var(--border);
+      border-radius:var(--r2);padding:.7rem 1rem;font-size:.75rem;
+      font-family:'SFMono-Regular',Consolas,monospace;color:var(--indigo);
+      word-break:break-all;line-height:1.4;min-height:54px;display:flex;align-items:center;
+    }
+    .btn-copy{
+      background:var(--bg-card-2);border:1px solid var(--border);
+      border-radius:var(--r2);padding:.7rem 1rem;cursor:pointer;
+      font-size:.82rem;font-weight:700;color:var(--text-dim);
+      white-space:nowrap;transition:all .18s var(--ease);font-family:var(--font);
+      display:flex;align-items:center;gap:.35rem;flex-shrink:0;
+    }
+    .btn-copy:hover{border-color:var(--border-2);color:var(--text)}
+    .btn-copy.copied{border-color:rgba(16,185,129,.4);color:#4ADE80;background:rgba(16,185,129,.08)}
+
+    /* Formulário de cartão */
+    .card-form{display:flex;flex-direction:column;gap:1rem}
+    .card-field-group{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .card-field label{display:block;font-size:.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem}
+    .card-input{
+      width:100%;padding:.82rem 1rem;background:var(--bg-input);
+      border:1.5px solid var(--border);border-radius:var(--r2);
+      color:var(--text);font-size:.95rem;font-family:var(--font);
+      transition:border-color .18s var(--ease);box-sizing:border-box;
+      -webkit-appearance:none;
+    }
+    .card-input:focus{outline:none;border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+    .card-input::placeholder{color:var(--text-ghost)}
+    .card-input.error{border-color:#EF4444;box-shadow:0 0 0 3px rgba(239,68,68,.1)}
+    .card-field-error{font-size:.72rem;color:#F87171;margin-top:.3rem;display:none}
+    .card-field.has-error .card-field-error{display:block}
+    .card-field.has-error .card-input{border-color:#EF4444}
+
+    /* Preview do cartão mini */
+    .card-preview{
+      background:linear-gradient(135deg,#1e1e38,#2d2d55);
+      border-radius:12px;padding:1.1rem 1.25rem;
+      display:flex;flex-direction:column;gap:.5rem;
+      border:1px solid rgba(99,102,241,.2);
+      position:relative;overflow:hidden;
+    }
+    .card-preview::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.25),transparent 70%)}
+    .card-preview-number{font-size:1.05rem;font-weight:700;letter-spacing:3px;color:var(--text);font-family:'SFMono-Regular',Consolas,monospace}
+    .card-preview-row{display:flex;justify-content:space-between;align-items:flex-end}
+    .card-preview-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)}
+    .card-preview-value{font-size:.82rem;font-weight:700;color:var(--text)}
+    .card-brand{position:absolute;top:1rem;right:1.1rem;font-size:.75rem;font-weight:800;color:#A5B4FC;text-transform:uppercase;letter-spacing:1px}
+
+    /* Parcelas */
+    .installments-select{
+      width:100%;padding:.82rem 1rem;background:var(--bg-input);
+      border:1.5px solid var(--border);border-radius:var(--r2);
+      color:var(--text);font-size:.95rem;font-family:var(--font);
+      transition:border-color .18s var(--ease);cursor:pointer;
+      -webkit-appearance:none;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right .9rem center;
+      padding-right:2.5rem;
+    }
+    .installments-select:focus{outline:none;border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+
+    /* Botão pagar cartão */
+    .btn-pagar{
+      width:100%;padding:1.1rem;border-radius:var(--r);border:none;cursor:pointer;
+      font-family:var(--font);font-size:1rem;font-weight:800;
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      transition:all .2s var(--ease);
+      background:linear-gradient(135deg,#6366F1,#4F46E5);
+      color:#fff;box-shadow:0 4px 20px rgba(99,102,241,.3);
+      min-height:54px;-webkit-tap-highlight-color:transparent;
+    }
+    .btn-pagar:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(99,102,241,.4)}
+    .btn-pagar:active{transform:translateY(0)}
+    .btn-pagar:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    /* Ícones bandeira */
+    .card-brands{display:flex;gap:.4rem;align-items:center}
+    .card-brand-icon{width:34px;height:22px;border-radius:4px;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;color:var(--text-dim);letter-spacing:.5px}
+
+    /* Status aprovado */
+    .status-aprovado{
+      display:none;flex-direction:column;align-items:center;gap:.75rem;
+      background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+      border-radius:var(--r);padding:1.5rem;text-align:center;
+    }
+    .status-aprovado.visible{display:flex}
+    .status-aprovado-icon{font-size:2.5rem}
+    .status-aprovado h3{font-size:1.1rem;font-weight:800;color:#4ADE80}
+    .status-aprovado p{font-size:.88rem;color:var(--text-dim)}
+
+    /* Erro cartão */
+    .card-pay-error{
+      background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);
+      color:#FCA5A5;padding:.9rem 1.1rem;border-radius:var(--r2);
+      font-size:.87rem;font-weight:500;display:none;align-items:center;gap:.5rem;
+      margin-bottom:.5rem;
+    }
+    .card-pay-error.visible{display:flex}
+
+    /* Não configurado */
+    .mp-nao-config{
+      background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);
+      border-radius:var(--r2);padding:1rem 1.15rem;font-size:.85rem;
+      color:var(--text-dim);line-height:1.5;
+    }
+    .mp-nao-config strong{color:var(--amber)}
+
+    /* Alert success */
+    .alert-ok{
+      background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+      color:#4ADE80;padding:.9rem 1.1rem;border-radius:var(--r2);
+      margin-bottom:1.1rem;font-size:.88rem;font-weight:500;
+      display:flex;align-items:center;gap:.5rem;
+    }
+
+    /* Segurança */
+    .seguranca-row{display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:.72rem;color:var(--text-dim);margin-top:.4rem}
+
+    /* WhatsApp btn */
+    .btn-whats{
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      width:100%;padding:1rem;background:#25D366;color:#fff;
+      font-weight:700;font-size:.95rem;border:none;border-radius:var(--r2);
+      cursor:pointer;text-decoration:none;transition:all .2s var(--ease);font-family:var(--font);
+      margin-bottom:.75rem;min-height:52px;
+    }
+    .btn-whats:hover{background:#128C7E;transform:translateY(-1px)}
+
+    /* Logout link */
+    .logout-link{text-align:center;margin-top:1.5rem}
+    .logout-link a{color:var(--text-dim);font-size:.84rem;text-decoration:none;transition:color .18s}
+    .logout-link a:hover{color:var(--text)}
+
+    @media(max-width:480px){
+      body{padding:1.25rem .85rem 2.5rem}
+      .plano-preco{font-size:2.6rem}
+      .card-field-group{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="pay-wrap">
+
+    <!-- Logo -->
+    <div class="pay-logo">
+      <div class="pay-logo-inner">
+        <div class="pay-logo-pole"></div>
+        <div>
+          <h1>Barber Metric</h1>
+          <div class="pay-logo-sub">Gestão Inteligente para Barbearias</div>
+        </div>
+      </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert-ok">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      {{ msg }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Seleção de plano -->
+    <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem">Escolha seu plano</div>
+    <div class="planos-grid">
+      <div class="plano-card plano-card-pro selected" id="cardPro" onclick="selecionarPlano('pro')">
+        <div class="plano-check"></div>
+        <div class="plano-badge">Pro</div>
+        <div class="plano-nome">Plano Pro</div>
+        <div class="plano-preco">R$14<span>,90/mês</span></div>
+        <div class="plano-features">
+          <div class="plano-feature">Clientes avulsos ilimitados</div>
+          <div class="plano-feature">Até 100 clientes com nome</div>
+          <div class="plano-feature">2 barbeiros no total</div>
+          <div class="plano-feature">6 serviços e 6 produtos</div>
+          <div class="plano-feature">Relatórios e fila digital</div>
+        </div>
+      </div>
+      <div class="plano-card plano-card-max" id="cardMax" onclick="selecionarPlano('max')">
+        <div class="plano-check"></div>
+        <div class="plano-badge">Max</div>
+        <div class="plano-nome">Plano Max</div>
+        <div class="plano-preco">R$34<span>,90/mês</span></div>
+        <div class="plano-features">
+          <div class="plano-feature">Clientes avulsos ilimitados</div>
+          <div class="plano-feature">Até 1000 clientes com nome</div>
+          <div class="plano-feature">Até 20 barbeiros</div>
+          <div class="plano-feature">20 serviços e 20 produtos</div>
+          <div class="plano-feature">Relatórios e fila digital</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção Mercado Pago -->
+    <div class="mp-section">
+
+      {% if mp_configurado %}
+
+      <!-- Abas -->
+      <div class="pay-tabs">
+        <button class="pay-tab active" id="tabPix" onclick="trocarAba('pix')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h1v1h-1z M16 14h1v1h-1z M14 16h1v1h-1z M16 16h3v3h-3z"/></svg>
+          PIX
+        </button>
+        <button class="pay-tab" id="tabCartao" onclick="trocarAba('cartao')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Cartão de Crédito
+        </button>
+      </div>
+
+      <!-- ── Painel PIX ── -->
+      <div class="pay-tab-panel active" id="panelPix">
+
+        <!-- Status aprovado -->
+        <div class="status-aprovado" id="statusAprovadoPix">
+          <div class="status-aprovado-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#celebGrad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <defs><linearGradient id="celebGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#4ADE80"/></linearGradient></defs>
+              <path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
+              <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+              <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17"/>
+              <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/>
+              <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2z"/>
+            </svg>
+          </div>
+          <h3>Pagamento confirmado!</h3>
+          <p>Sua assinatura foi ativada. Redirecionando...</p>
+        </div>
+
+        <!-- Botão gerar QR -->
+        <button class="btn-mp" id="btnGerarQR" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h1v1h-1z M16 14h1v1h-1z M14 16h1v1h-1z M16 16h3v3h-3z"/></svg>
+          <span id="btnGerarQRLabel">Gerar QR Code PIX — R$14,90 (Pro)</span>
+        </button>
+
+        <!-- Container QR -->
+        <div class="qr-container" id="qrContainer" style="margin-top:1.25rem">
+          <div class="qr-img-wrap">
+            <img id="qrImg" src="" alt="QR Code PIX" width="180" height="180">
+          </div>
+          <div class="qr-timer">
+            <span class="qr-timer-dot"></span>
+            <span id="qrStatus">Aguardando pagamento...</span>
+          </div>
+          <p class="qr-instructions">
+            Abra o app do seu banco → PIX → Ler QR Code<br>
+            ou copie o código abaixo
+          </p>
+          <div class="pix-copy-box">
+            <div class="pix-copy-label">PIX Copia e Cola</div>
+            <div class="pix-copy-row">
+              <div class="pix-code" id="pixCode">—</div>
+              <button class="btn-copy" id="btnCopy" type="button">Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="seguranca-row" style="margin-top:.9rem">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Pagamento seguro via Mercado Pago
+        </div>
+      </div>
+
+      <!-- ── Painel Cartão ── -->
+      <div class="pay-tab-panel" id="panelCartao">
+
+        <!-- Status aprovado cartão -->
+        <div class="status-aprovado" id="statusAprovadoCartao">
+          <div class="status-aprovado-icon">✅</div>
+          <h3>Pagamento aprovado!</h3>
+          <p>Sua assinatura foi ativada. Redirecionando...</p>
+        </div>
+
+        <!-- Erro cartão -->
+        <div class="card-pay-error" id="cardPayError">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span id="cardPayErrorMsg">Cartão recusado. Verifique os dados e tente novamente.</span>
+        </div>
+
+        <div id="cardFormWrap">
+          <!-- Preview visual -->
+          <div class="card-preview" id="cardPreview" style="margin-bottom:1.1rem">
+            <span class="card-brand" id="cardBrandPreview">•••</span>
+            <div class="card-preview-number" id="previewNumber">•••• •••• •••• ••••</div>
+            <div class="card-preview-row">
+              <div>
+                <div class="card-preview-label">Titular</div>
+                <div class="card-preview-value" id="previewName">SEU NOME</div>
+              </div>
+              <div style="text-align:right">
+                <div class="card-preview-label">Validade</div>
+                <div class="card-preview-value" id="previewExpiry">MM/AA</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-form" id="cardForm">
+            <!-- Número do cartão -->
+            <div class="card-field" id="fieldNumero">
+              <label for="cardNumber">Número do Cartão</label>
+              <input class="card-input" type="tel" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number">
+              <div class="card-field-error">Número de cartão inválido</div>
+            </div>
+
+            <!-- Nome -->
+            <div class="card-field" id="fieldNome">
+              <label for="cardName">Nome no Cartão</label>
+              <input class="card-input" type="text" id="cardName" placeholder="Como aparece no cartão" autocomplete="cc-name" style="text-transform:uppercase">
+              <div class="card-field-error">Informe o nome como está no cartão</div>
+            </div>
+
+            <!-- Validade + CVV -->
+            <div class="card-field-group">
+              <div class="card-field" id="fieldValidade">
+                <label for="cardExpiry">Validade</label>
+                <input class="card-input" type="tel" id="cardExpiry" placeholder="MM/AA" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
+                <div class="card-field-error">Data inválida</div>
+              </div>
+              <div class="card-field" id="fieldCvv">
+                <label for="cardCvv">CVV</label>
+                <input class="card-input" type="tel" id="cardCvv" placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
+                <div class="card-field-error">CVV inválido</div>
+              </div>
+            </div>
+
+            <!-- CPF -->
+            <div class="card-field" id="fieldCpf">
+              <label for="cardCpf">CPF do Titular</label>
+              <input class="card-input" type="tel" id="cardCpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" autocomplete="off">
+              <div class="card-field-error">CPF inválido</div>
+            </div>
+
+            <!-- Botão pagar -->
+            <button class="btn-pagar" id="btnPagarCartao" type="button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span id="btnPagarLabel">Pagar com Cartão — R$14,90 (Pro)</span>
+            </button>
+
+            <!-- Bandeiras aceitas + segurança -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-top:.2rem">
+              <div class="card-brands">
+                <div class="card-brand-icon">VISA</div>
+                <div class="card-brand-icon">MSTR</div>
+                <div class="card-brand-icon">ELO</div>
+                <div class="card-brand-icon">AMEX</div>
+                <div class="card-brand-icon">HIPER</div>
+              </div>
+              <div class="seguranca-row">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Criptografado pelo Mercado Pago
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {% else %}
+      <!-- MP não configurado -->
+      <div style="padding:1.25rem">
+        <div class="mp-nao-config">
+          <strong>Configuração pendente</strong><br>
+          O Mercado Pago ainda não está configurado. Use o WhatsApp abaixo para pagar.
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /.mp-section -->
+
+    <!-- WhatsApp fallback -->
+    <a href="https://wa.me/5519999999999?text=Olá!%20Quero%20assinar%20o%20Barber%20Metrics%20para%20{{ barbearia.nome|urlencode }}%20-%20R$20/mês" target="_blank" class="btn-whats">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.126 1.535 5.86L.057 23.966l6.233-1.633A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.001-1.364l-.359-.213-3.7.97.988-3.61-.233-.37A9.818 9.818 0 1112 21.818z"/></svg>
+      Contato via WhatsApp
+    </a>
+
+    <div class="logout-link">
+      <a href="{% url 'logout' %}">← Sair da conta</a>
+    </div>
+
+  </div><!-- /.pay-wrap -->
+
+  {% if mp_public_key %}
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  {% endif %}
+  <script>
+  (function () {
+    /* ── Estado global ── */
+    var planoSelecionado = '{{ plano_intencao|default:"pro" }}';
+    if (planoSelecionado !== 'pro' && planoSelecionado !== 'max') planoSelecionado = 'pro';
+    var precos   = { pro: 'R$14,90', max: 'R$34,90' };
+    var nomes    = { pro: 'Pro',     max: 'Max'      };
+    var pixPaymentId = null;
+    var pollTimer    = null;
+    var mpSDK        = null;   // instância do MercadoPago SDK
+
+    /* ── Troca de aba ── */
+    window.trocarAba = function (aba) {
+      document.getElementById('tabPix').classList.toggle('active', aba === 'pix');
+      document.getElementById('tabCartao').classList.toggle('active', aba === 'cartao');
+      document.getElementById('panelPix').classList.toggle('active', aba === 'pix');
+      document.getElementById('panelCartao').classList.toggle('active', aba === 'cartao');
+    };
+
+    /* ── Selecionar plano ── */
+    window.selecionarPlano = function (plano) {
+      if (pixPaymentId) return; // QR já gerado
+      planoSelecionado = plano;
+      document.getElementById('cardPro').classList.toggle('selected', plano === 'pro');
+      document.getElementById('cardMax').classList.toggle('selected', plano === 'max');
+      // Atualiza labels
+      var lbl = document.getElementById('btnGerarQRLabel');
+      if (lbl) lbl.textContent = 'Gerar QR Code PIX — ' + precos[plano] + ' (' + nomes[plano] + ')';
+      var lbl2 = document.getElementById('btnPagarLabel');
+      if (lbl2) lbl2.textContent = 'Pagar com Cartão — ' + precos[plano] + ' (' + nomes[plano] + ')';
+    };
+
+    /* ── Aplica seleção inicial ── */
+    selecionarPlano(planoSelecionado);
+
+    /* ════════════════════════════════
+       PIX
+    ════════════════════════════════ */
+    var btnGerar  = document.getElementById('btnGerarQR');
+    var btnLabel  = document.getElementById('btnGerarQRLabel');
+    var qrContainer  = document.getElementById('qrContainer');
+    var qrImg        = document.getElementById('qrImg');
+    var pixCode      = document.getElementById('pixCode');
+    var btnCopy      = document.getElementById('btnCopy');
+    var qrStatus     = document.getElementById('qrStatus');
+    var statusAprovadoPix = document.getElementById('statusAprovadoPix');
+
+    if (btnGerar) {
+      btnGerar.addEventListener('click', function () {
+        btnGerar.disabled = true;
+        if (btnLabel) btnLabel.textContent = 'Gerando QR Code...';
+
+        fetch('/pagamento/gerar-pix/', {
+          method: 'POST',
+          headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+          body: JSON.stringify({ plano: planoSelecionado }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            alert('Erro: ' + (data.erro || 'Tente novamente.'));
+            btnGerar.disabled = false;
+            if (btnLabel) btnLabel.textContent = 'Gerar QR Code PIX — ' + precos[planoSelecionado] + ' (' + nomes[planoSelecionado] + ')';
+            return;
+          }
+          pixPaymentId = data.payment_id;
+          if (data.qr_code_base64) qrImg.src = 'data:image/png;base64,' + data.qr_code_base64;
+          if (data.qr_code) pixCode.textContent = data.qr_code;
+          document.getElementById('cardPro').style.pointerEvents = 'none';
+          document.getElementById('cardMax').style.pointerEvents = 'none';
+          btnGerar.style.display = 'none';
+          qrContainer.classList.add('visible');
+          iniciarPollingPix();
+        })
+        .catch(function () {
+          alert('Erro de conexão. Tente novamente.');
+          btnGerar.disabled = false;
+          if (btnLabel) btnLabel.textContent = 'Gerar QR Code PIX — ' + precos[planoSelecionado];
+        });
+      });
+    }
+
+    if (btnCopy) {
+      btnCopy.addEventListener('click', function () {
+        var txt = pixCode.textContent;
+        if (!txt || txt === '—') return;
+        navigator.clipboard.writeText(txt).then(function () {
+          btnCopy.textContent = '✓ Copiado!';
+          btnCopy.classList.add('copied');
+          setTimeout(function () { btnCopy.textContent = 'Copiar'; btnCopy.classList.remove('copied'); }, 2500);
+        });
+      });
+    }
+
+    function iniciarPollingPix() {
+      if (!pixPaymentId) return;
+      pollTimer = setInterval(verificarStatusPix, 5000);
+    }
+
+    function verificarStatusPix() {
+      if (!pixPaymentId) return;
+      fetch('/pagamento/status-mp/' + pixPaymentId + '/', {
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.aprovado) {
+          clearInterval(pollTimer);
+          qrContainer.classList.remove('visible');
+          statusAprovadoPix.classList.add('visible');
+          sessionStorage.setItem('pwaTrigger', '1');
+          setTimeout(function () { window.location.href = '/app/'; }, 2500);
+        } else if (data.status === 'rejected' || data.status === 'cancelled') {
+          clearInterval(pollTimer);
+          qrStatus.textContent = 'Pagamento não aprovado. Tente novamente.';
+          document.getElementById('cardPro').style.pointerEvents = '';
+          document.getElementById('cardMax').style.pointerEvents = '';
+          btnGerar.style.display = 'flex';
+          btnGerar.disabled = false;
+          if (btnLabel) btnLabel.textContent = 'Tentar Novamente';
+          qrContainer.classList.remove('visible');
+          pixPaymentId = null;
+        }
+      })
+      .catch(function () {});
+    }
+
+    /* ════════════════════════════════
+       CARTÃO — Máscaras e preview
+    ════════════════════════════════ */
+    var cardNumber      = document.getElementById('cardNumber');
+    var cardName        = document.getElementById('cardName');
+    var cardExpiry      = document.getElementById('cardExpiry');
+    var cardCvv         = document.getElementById('cardCvv');
+    var cardCpf         = document.getElementById('cardCpf');
+    var btnPagarCartao  = document.getElementById('btnPagarCartao');
+    var cardPayError    = document.getElementById('cardPayError');
+    var cardPayErrorMsg = document.getElementById('cardPayErrorMsg');
+    var statusAprovadoCartao = document.getElementById('statusAprovadoCartao');
+
+    if (!cardNumber) return; // MP não configurado, para por aqui
+
+    /* Preview */
+    function updatePreview() {
+      var num = (cardNumber.value || '').replace(/\s/g, '');
+      var masked = '';
+      for (var i = 0; i < 16; i++) {
+        if (i > 0 && i % 4 === 0) masked += ' ';
+        masked += num[i] ? num[i] : '•';
+      }
+      document.getElementById('previewNumber').textContent = masked;
+      document.getElementById('previewName').textContent = (cardName.value || 'SEU NOME').toUpperCase() || 'SEU NOME';
+      document.getElementById('previewExpiry').textContent = cardExpiry.value || 'MM/AA';
+      document.getElementById('cardBrandPreview').textContent = detectBrand(num) || '•••';
+    }
+
+    function detectBrand(num) {
+      if (/^4/.test(num))                    return 'Visa';
+      if (/^5[1-5]/.test(num))               return 'Master';
+      if (/^3[47]/.test(num))                return 'Amex';
+      if (/^6(?:011|5)/.test(num))           return 'Elo';
+      if (/^(384|606282)/.test(num))         return 'Hiper';
+      return '';
+    }
+
+    /* Máscara número */
+    cardNumber.addEventListener('input', function () {
+      var v = this.value.replace(/\D/g, '').slice(0, 16);
+      this.value = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+      updatePreview();
+    });
+
+    /* Nome */
+    cardName.addEventListener('input', updatePreview);
+
+    /* Validade MM/AA */
+    cardExpiry.addEventListener('input', function () {
+      var v = this.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+      this.value = v;
+      updatePreview();
+    });
+
+    /* CVV — apenas dígitos */
+    cardCvv.addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    /* CPF */
+    cardCpf.addEventListener('input', function () {
+      var v = this.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 9)      v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
+      else if (v.length > 6) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+      else if (v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
+      this.value = v;
+    });
+
+
+    /* Validação simples */
+    function validarCampos() {
+      var ok = true;
+
+      function setErr(fieldId, cond) {
+        var el = document.getElementById(fieldId);
+        if (!el) return;
+        el.classList.toggle('has-error', !cond);
+        if (!cond) ok = false;
+      }
+
+      var num = cardNumber.value.replace(/\s/g,'');
+      setErr('fieldNumero', num.length >= 13 && num.length <= 16);
+
+      setErr('fieldNome', cardName.value.trim().length >= 3);
+
+      var exp = cardExpiry.value;
+      var expOk = /^\d{2}\/\d{2}$/.test(exp);
+      if (expOk) {
+        var parts = exp.split('/');
+        var mm = parseInt(parts[0], 10);
+        var yy = parseInt(parts[1], 10) + 2000;
+        var now = new Date();
+        expOk = mm >= 1 && mm <= 12 && (yy > now.getFullYear() || (yy === now.getFullYear() && mm >= now.getMonth() + 1));
+      }
+      setErr('fieldValidade', expOk);
+
+      setErr('fieldCvv', cardCvv.value.length >= 3);
+
+      var cpf = cardCpf.value.replace(/\D/g,'');
+      setErr('fieldCpf', cpf.length === 11);
+
+      return ok;
+    }
+
+    /* Inicializa SDK do MP — com carregamento dinâmico se necessário */
+    function initMpSDK(callback) {
+      if (typeof MercadoPago !== 'undefined') {
+        try {
+          if (!mpSDK) mpSDK = new MercadoPago('{{ mp_public_key }}', { locale: 'pt-BR' });
+          if (callback) callback(null);
+        } catch(e) {
+          if (callback) callback(e);
+        }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = 'https://sdk.mercadopago.com/js/v2';
+      s.onload = function () {
+        try {
+          mpSDK = new MercadoPago('{{ mp_public_key }}', { locale: 'pt-BR' });
+          if (callback) callback(null);
+        } catch(e) {
+          if (callback) callback(e);
+        }
+      };
+      s.onerror = function () {
+        if (callback) callback(new Error('SDK não carregou (verifique o console do navegador)'));
+      };
+      document.head.appendChild(s);
+    }
+    initMpSDK(null);
+
+    /* ════════════════════════════════
+       Submissão do cartão
+    ════════════════════════════════ */
+    btnPagarCartao.addEventListener('click', function () {
+      cardPayError.classList.remove('visible');
+
+      if (!validarCampos()) return;
+
+      btnPagarCartao.disabled = true;
+      document.getElementById('btnPagarLabel').textContent = 'Carregando...';
+
+      initMpSDK(function (err) {
+        if (err) {
+          // Tenta detectar se é falta de internet
+          var msg = err.message || 'Erro ao inicializar pagamento com cartão.';
+          mostrarErroCartao(msg);
+          btnPagarCartao.disabled = false;
+          document.getElementById('btnPagarLabel').textContent = 'Tentar novamente';
+          return;
+        }
+        processarCartao();
+      });
+    });
+
+    function processarCartao() {
+      document.getElementById('btnPagarLabel').textContent = 'Processando...';
+
+      var exp = cardExpiry.value.split('/');
+      var expMonth = exp[0];
+      var expYear  = '20' + exp[1];
+      var num      = cardNumber.value.replace(/\s/g, '');
+
+      mpSDK.createCardToken({
+        cardNumber:      num,
+        cardholderName:  cardName.value.trim(),
+        cardExpirationMonth: expMonth,
+        cardExpirationYear:  expYear,
+        securityCode:    cardCvv.value,
+        identificationType: 'CPF',
+        identificationNumber: cardCpf.value.replace(/\D/g,''),
+      })
+      .then(function (tokenResult) {
+        if (!tokenResult || !tokenResult.id) {
+          throw new Error('Token inválido retornado pelo MP');
+        }
+        return fetch('/pagamento/gerar-cartao/', {
+          method: 'POST',
+          headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            card_token:        tokenResult.id,
+            plano:             planoSelecionado,
+            installments:      1,
+            payment_method_id: detectPaymentMethodId(num),
+            email:             '{{ barbearia.user.email }}',
+            cpf:               cardCpf.value.replace(/\D/g,''),
+          }),
+        });
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) {
+          throw new Error(data.erro || 'Pagamento recusado.');
+        }
+        if (data.aprovado) {
+          document.getElementById('cardFormWrap').style.display = 'none';
+          statusAprovadoCartao.classList.add('visible');
+          sessionStorage.setItem('pwaTrigger', '1');
+          setTimeout(function () { window.location.href = '/app/'; }, 2500);
+        } else if (data.pendente) {
+          mostrarErroCartao('Pagamento em análise. Você receberá uma confirmação por e-mail.');
+        } else {
+          throw new Error('Pagamento não aprovado. Tente outro cartão ou use PIX.');
+        }
+      })
+      .catch(function (err) {
+        console.error('MP Erro:', err);
+        var msg = err.message || JSON.stringify(err) || 'Erro desconhecido';
+        mostrarErroCartao(msg);
+        btnPagarCartao.disabled = false;
+        document.getElementById('btnPagarLabel').textContent = 'Pagar com Cartão — ' + precos[planoSelecionado] + ' (' + nomes[planoSelecionado] + ')';
+      });
+    }
+
+    function mostrarErroCartao(msg) {
+      cardPayErrorMsg.textContent = msg;
+      cardPayError.classList.add('visible');
+      cardPayError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function detectPaymentMethodId(num) {
+      if (/^4/.test(num))          return 'visa';
+      if (/^5[1-5]/.test(num))     return 'master';
+      if (/^3[47]/.test(num))      return 'amex';
+      if (/^6(?:011|5)/.test(num)) return 'elo';
+      if (/^(384|606282)/.test(num)) return 'hipercard';
+      return 'visa'; // fallback
+    }
+
+  })();
+  </script>
+</body>
+</html>
+

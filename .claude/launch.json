@@ -1,0 +1,12 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Barber Metric-django",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["manage.py", "runserver", "8001"],
+      "port": 8001
+    }
+  ]
+}
+

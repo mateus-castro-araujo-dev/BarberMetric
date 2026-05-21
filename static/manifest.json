@@ -1,0 +1,17 @@
+﻿{
+  "name": "Barber Metric",
+  "short_name": "Barber Metric",
+  "description": "Sistema profissional para barbearias",
+  "start_url": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1C0E3C",
+  "theme_color": "#6366F1",
+  "icons": [
+    {"src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
+

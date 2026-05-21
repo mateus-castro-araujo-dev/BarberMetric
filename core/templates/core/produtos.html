@@ -1,0 +1,106 @@
+﻿{% extends 'core/base.html' %}
+{% block title %}Produtos — Barber Metric{% endblock %}
+{% block page_title %}Produtos{% endblock %}
+
+{% block content %}
+
+<div class="live-header">
+  <div class="live-tag">
+    <span>Catálogo: <strong>{{ lista_produtos|length }} produto{{ lista_produtos|length|pluralize }}</strong></span>
+  </div>
+  <h1 class="live-title">
+    Produtos
+    <span class="live-title-emoji">{% include 'core/_icon.html' with name='shopping' %}</span>
+  </h1>
+</div>
+
+<div class="card" style="max-width:620px;margin-bottom:1.5rem">
+  <div class="card-header"><h2 class="card-title">{% include 'core/_icon.html' with name='plus' %} Adicionar Produto</h2></div>
+  <form method="POST" style="padding:0 1.25rem 1.25rem;display:flex;flex-direction:column;gap:.75rem">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add">
+    <div style="display:grid;grid-template-columns:1fr 130px;gap:.65rem">
+      <div>
+        <label style="margin-top: 10px;" class="form-label">Nome do Produto *</label>
+        <input type="text" name="nome" class="form-input" placeholder="Ex: Pomada Modeladora" required>
+      </div>
+      <div>
+        <label class="form-label">Preço (R$) *</label>
+        <input type="text" name="preco" class="form-input" placeholder="Ex: 35,00" required>
+      </div>
+    </div>
+    <div>
+      <label class="form-label">Descrição (opcional)</label>
+      <input type="text" name="descricao" class="form-input" placeholder="Ex: 100g, fixação extra...">
+    </div>
+    <div>
+      <button type="submit" class="btn-submit compact">{% include 'core/_icon.html' with name='plus' %} Adicionar Produto</button>
+    </div>
+  </form>
+</div>
+
+<div class="overview-section">
+  <div class="overview-head">
+    <div class="overview-title-block">
+      <div class="overview-sub">{% include 'core/_icon.html' with name='shopping' %} Lista completa</div>
+      <div class="overview-title">Produtos Cadastrados</div>
+    </div>
+
+  </div>
+  <div class="card">
+    {% if lista_produtos %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Produto</th>
+            <th>Descrição</th>
+            <th>Preço</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in lista_produtos %}
+          <tr>
+            <td>#{{ forloop.counter }}</td>
+            <td>
+              <span class="cliente-link">
+                <span class="cell-avatar">{{ p.nome|first|upper }}</span>
+                {{ p.nome }}
+              </span>
+            </td>
+            <td style="color:var(--text-dim);font-size:.88rem">{{ p.descricao|default:"—" }}</td>
+            <td class="valor-cell">R$ {{ p.preco }}</td>
+            <td>
+              <form method="POST" style="display:inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle">
+                <input type="hidden" name="id" value="{{ p.id }}">
+                <button type="submit" class="pct-pill {% if p.ativo %}up{% else %}down{% endif %}" style="border:none;cursor:pointer;font-family:var(--font)">
+                  {% if p.ativo %}Ativo{% else %}Inativo{% endif %}
+                </button>
+              </form>
+            </td>
+            <td class="actions-cell">
+              <form method="POST" style="display:inline" onsubmit="return confirm('Excluir {{ p.nome }}?')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="{{ p.id }}">
+                <button type="submit" class="btn-icon danger">{% include 'core/_icon.html' with name='trash' %}</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Nenhum produto cadastrado ainda. Adicione o primeiro acima.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+

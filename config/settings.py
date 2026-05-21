@@ -105,8 +105,8 @@ MP_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY', 'APP_USR-91660898-d194-4f8d-82f0
 MP_WEBHOOK_SECRET = os.environ.get('MP_WEBHOOK_SECRET', '')
 # URL pública do servidor (usado na notification_url do webhook MP em produção)
 SITE_URL = os.environ.get('SITE_URL', '')
-ASSINATURA_VALOR_PRO = 0.01 # 14.90   # R$ por mês — Plano Pro
-ASSINATURA_VALOR_MAX = 0.02 # 34.90   # R$ por mês — Plano Max
+ASSINATURA_VALOR_PRO = 14.90   # R$ por mês — Plano Pro
+ASSINATURA_VALOR_MAX = 34.90   # R$ por mês — Plano Max
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',

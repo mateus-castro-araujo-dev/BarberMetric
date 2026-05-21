@@ -21,6 +21,8 @@ from core.models import Barbeiro
 
 MP_API_BASE = 'https://api.mercadopago.com'
 ABACATE_API_BASE = 'https://api.abacatepay.com/v1'
+ASAAS_API_BASE = 'https://api.asaas.com/v3'
+ASAAS_SANDBOX_BASE = 'https://api-sandbox.asaas.com/v3'
 
 
 def index(request):
@@ -307,15 +309,72 @@ def pagamento(request):
     })
 
 
-# ─── Abacate Pay (PIX) ───────────────────────────────────────────────────────
+# ─── Asaas (PIX) ─────────────────────────────────────────────────────────────
+
+def _asaas_headers(api_key):
+    return {'access_token': api_key, 'Content-Type': 'application/json'}
+
+def _asaas_base(api_key):
+    """Usa sandbox se a chave começa com $ (chave de teste do Asaas)."""
+    if api_key.startswith('$aact_'):
+        return ASAAS_SANDBOX_BASE
+    return ASAAS_API_BASE
+
+def _asaas_get_or_create_customer(api_key, barbearia):
+    """Busca cliente existente pelo CPF ou cria novo."""
+    base = _asaas_base(api_key)
+    headers = _asaas_headers(api_key)
+    try:
+        cpf = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
+    except Exception:
+        cpf = ''
+
+    # Tenta buscar cliente existente pelo CPF
+    if cpf:
+        try:
+            resp = http_requests.get(
+                f'{base}/customers',
+                params={'cpfCnpj': cpf},
+                headers=headers,
+                timeout=10,
+            )
+            if resp.ok:
+                data = resp.json()
+                clientes = data.get('data', [])
+                if clientes:
+                    return clientes[0]['id'], None
+        except Exception:
+            pass
+
+    # Cria novo cliente
+    nome = f"{barbearia.user.first_name or ''} {barbearia.user.last_name or ''}".strip() or barbearia.nome
+    payload = {
+        'name': nome,
+        'email': barbearia.user.email,
+        'cpfCnpj': cpf,
+        'externalReference': f'barbearia-{barbearia.pk}',
+    }
+    telefone = re.sub(r'\D', '', getattr(barbearia, 'telefone', '') or '')
+    if telefone:
+        payload['mobilePhone'] = telefone
+
+    try:
+        resp = http_requests.post(f'{base}/customers', json=payload, headers=headers, timeout=10)
+        data = resp.json()
+        if resp.ok:
+            return data['id'], None
+        return None, data.get('errors', [{'description': str(data)}])[0].get('description', str(data))
+    except Exception as e:
+        return None, str(e)
+
 
 @login_required(login_url='/login/')
 def gerar_pagamento_pix(request):
-    """Cria um pagamento PIX via Abacate Pay e retorna QR code."""
+    """Cria um pagamento PIX via Asaas e retorna QR code."""
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'erro': 'Método inválido'}, status=405)
 
-    api_key = getattr(django_settings, 'ABACATEPAY_KEY', '')
+    api_key = getattr(django_settings, 'ASAAS_API_KEY', '')
     if not api_key:
         return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'}, status=503)
 
@@ -345,57 +404,54 @@ def gerar_pagamento_pix(request):
         valor = float(getattr(django_settings, 'ASSINATURA_VALOR_PRO', 14.90))
         descricao_plano = 'Pro'
 
-    valor_centavos = int(round(valor * 100))
+    base = _asaas_base(api_key)
+    headers = _asaas_headers(api_key)
 
-    try:
-        cpf_formatado = barbearia.cpf_proprietario or ''
-    except Exception:
-        cpf_formatado = ''
+    # 1. Obter ou criar cliente no Asaas
+    customer_id, erro_cliente = _asaas_get_or_create_customer(api_key, barbearia)
+    if not customer_id:
+        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'}, status=502)
 
-    nome_completo = f"{barbearia.user.first_name or ''} {barbearia.user.last_name or ''}".strip() or barbearia.nome
-    telefone = re.sub(r'\D', '', getattr(barbearia, 'telefone', '') or '')
-    if telefone and not telefone.startswith('+'):
-        telefone = '+55' + telefone
-
-    payload = {
-        'amount': valor_centavos,
-        'expiresIn': 3600,
-        'description': f'Barber Metric Plano {descricao_plano}',
-        'customer': {
-            'name': nome_completo,
-            'email': barbearia.user.email,
-            'cellphone': telefone or '+5511999999999',
-            'taxId': cpf_formatado,
-        },
-        'metadata': {'barbearia_id': barbearia.pk, 'plano': plano_escolhido},
-    }
-
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json',
+    # 2. Criar cobrança PIX
+    due_date = (timezone.now() + timezone.timedelta(days=1)).strftime('%Y-%m-%d')
+    payload_cobranca = {
+        'customer': customer_id,
+        'billingType': 'PIX',
+        'value': valor,
+        'dueDate': due_date,
+        'description': f'Barber Metric — Plano {descricao_plano}',
+        'externalReference': f'barbearia-{barbearia.pk}-{plano_escolhido}',
     }
 
     try:
-        resp = http_requests.post(
-            f'{ABACATE_API_BASE}/pixQrCode/create',
-            json=payload,
-            headers=headers,
-            timeout=15,
-        )
+        resp = http_requests.post(f'{base}/payments', json=payload_cobranca, headers=headers, timeout=15)
         data = resp.json()
         if not resp.ok:
-            erro = data.get('error') or data.get('message') or str(data)
-            return JsonResponse({'ok': False, 'erro': f'Erro {resp.status_code}: {erro}'}, status=502)
+            erros = data.get('errors', [])
+            detalhe = erros[0].get('description', str(data)) if erros else str(data)
+            return JsonResponse({'ok': False, 'erro': f'Erro {resp.status_code}: {detalhe}'}, status=502)
     except http_requests.RequestException as e:
         return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
 
-    pix_data = data.get('data', data)
-    payment_id = str(pix_data.get('id', ''))
-    qr_code = pix_data.get('brCode', '')
-    qr_base64 = pix_data.get('brCodeBase64', '')
-
+    payment_id = str(data.get('id', ''))
     if not payment_id:
-        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway de pagamento.'}, status=502)
+        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'}, status=502)
+
+    # 3. Obter QR code PIX
+    qr_code = ''
+    qr_base64 = ''
+    try:
+        resp_qr = http_requests.get(
+            f'{base}/payments/{payment_id}/pixQrCode',
+            headers=headers,
+            timeout=10,
+        )
+        if resp_qr.ok:
+            qr_data = resp_qr.json()
+            qr_code = qr_data.get('payload', '')
+            qr_base64 = qr_data.get('encodedImage', '')
+    except Exception:
+        pass
 
     PagamentoMP.objects.create(
         barbearia=barbearia,
@@ -553,23 +609,22 @@ def verificar_status_mp(request, payment_id):
     except PagamentoMP.DoesNotExist:
         return JsonResponse({'ok': False, 'erro': 'Pagamento não encontrado.'}, status=404)
 
-    api_key = getattr(django_settings, 'ABACATEPAY_KEY', '')
+    api_key = getattr(django_settings, 'ASAAS_API_KEY', '')
     if api_key:
         try:
+            base = _asaas_base(api_key)
             resp = http_requests.get(
-                f'{ABACATE_API_BASE}/pixQrCode/check',
-                params={'id': payment_id},
-                headers={'Authorization': f'Bearer {api_key}'},
+                f'{base}/payments/{payment_id}',
+                headers=_asaas_headers(api_key),
                 timeout=10,
             )
             if resp.ok:
                 data = resp.json()
-                pix_data = data.get('data', data)
-                status_abacate = pix_data.get('status', '').upper()
-                # Mapeia status Abacate Pay → status interno
-                if status_abacate == 'PAID':
+                status_asaas = data.get('status', '')
+                # Mapeia status Asaas → status interno
+                if status_asaas in ('RECEIVED', 'CONFIRMED'):
                     novo_status = 'approved'
-                elif status_abacate in ('EXPIRED', 'CANCELLED', 'REFUNDED'):
+                elif status_asaas in ('OVERDUE', 'REFUNDED', 'REFUND_REQUESTED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE', 'DUNNING_REQUESTED', 'DUNNING_RECEIVED'):
                     novo_status = 'cancelled'
                 else:
                     novo_status = 'pending'

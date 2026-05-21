@@ -13,7 +13,7 @@ FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'DKbOW2pFZkVpD_8Tb
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost, 127.0.0.1, 192.168.0.104, 192.168.196.21').split(',')]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost, 127.0.0.1, 192.168.0.104, 192.168.196.21').split(',')] + ['barbermetric.com.br', 'www.barbermetric.com.br']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -114,6 +114,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://192.168.0.104:8000',
     'http://192.168.196.21:8000',
     'https://barberlab.pythonanywhere.com',
+    'https://barbermetric.com.br',
+    'https://www.barbermetric.com.br',
 ]
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30

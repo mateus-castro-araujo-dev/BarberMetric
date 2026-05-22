@@ -112,6 +112,7 @@ MP_WEBHOOK_SECRET = os.environ.get('MP_WEBHOOK_SECRET', '')
 SITE_URL = os.environ.get('SITE_URL', '')
 # Asaas
 ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY', '')
+ASAAS_WEBHOOK_TOKEN = os.environ.get('ASAAS_WEBHOOK_TOKEN', '')
 ASSINATURA_VALOR_PRO = 14.90   # R$ por mês — Plano Pro
 ASSINATURA_VALOR_MAX = 34.90   # R$ por mês — Plano Max
 

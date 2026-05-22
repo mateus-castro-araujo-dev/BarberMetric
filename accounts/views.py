@@ -764,6 +764,13 @@ def webhook_asaas(request):
     if request.method != 'POST':
         return JsonResponse({'ok': False}, status=405)
 
+    # Valida token de autenticação do Asaas
+    webhook_token = getattr(django_settings, 'ASAAS_WEBHOOK_TOKEN', '')
+    if webhook_token:
+        token_recebido = request.headers.get('asaas-access-token', '')
+        if token_recebido != webhook_token:
+            return JsonResponse({'ok': False}, status=403)
+
     try:
         body = json.loads(request.body)
     except Exception:

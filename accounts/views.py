@@ -17,7 +17,7 @@ from django.core.mail import send_mail
 from django.conf import settings as django_settings
 from django.http import JsonResponse
 from .forms import CadastroForm
-from .models import Barbearia, SolicitacaoPagamento, PagamentoMP, hash_cpf, normalizar_telefone
+from .models import Barbearia, SolicitacaoPagamento, PagamentoMP, Sugestao, hash_cpf, normalizar_telefone
 from core.models import Barbeiro
 
 MP_API_BASE = 'https://api.mercadopago.com'
@@ -1126,4 +1126,21 @@ def dev_admin(request):
         'barbearias': barbearias,
         'stats': stats,
     })
+
+
+def dev_sugestoes(request):
+    if not _verificar_dev(request):
+        return redirect('dev_admin_login')
+    sugestoes = Sugestao.objects.all()
+    # marca todas como lidas ao abrir
+    sugestoes.filter(lida=False).update(lida=True)
+    return render(request, 'accounts/dev_sugestoes.html', {'sugestoes': sugestoes})
+
+
+def dev_sugestoes_novas(request):
+    """Endpoint de polling — retorna quantidade de sugestões não lidas."""
+    if not _verificar_dev(request):
+        return JsonResponse({'count': 0})
+    count = Sugestao.objects.filter(lida=False).count()
+    return JsonResponse({'count': count})
 

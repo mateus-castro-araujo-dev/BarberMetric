@@ -659,10 +659,13 @@ def suporte(request):
 @login_required(login_url=LOGIN_URL)
 @require_POST
 def suporte_enviar(request):
+    from accounts.models import Sugestao
     nome = request.POST.get('nome', '').strip()
     sugestao = request.POST.get('sugestao', '').strip()
     if nome and sugestao:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info('Sugestão de %s (%s): %s', nome, request.user.email, sugestao)
+        Sugestao.objects.create(
+            nome=nome,
+            email=request.user.email,
+            sugestao=sugestao,
+        )
     return JsonResponse({'ok': True})

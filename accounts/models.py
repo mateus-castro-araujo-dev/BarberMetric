@@ -216,6 +216,22 @@ class PagamentoMP(models.Model):
         return f'{self.barbearia.nome} — R${self.valor} ({self.status})'
 
 
+class Sugestao(models.Model):
+    nome = models.CharField(max_length=200)
+    email = models.CharField(max_length=200, blank=True)
+    sugestao = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+    lida = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Sugestão'
+        verbose_name_plural = 'Sugestões'
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f'{self.nome} — {self.criado_em.strftime("%d/%m/%Y %H:%M")}'
+
+
 class SolicitacaoPagamento(models.Model):
     barbearia = models.ForeignKey(Barbearia, on_delete=models.CASCADE, related_name='solicitacoes')
     data = models.DateTimeField(auto_now_add=True)

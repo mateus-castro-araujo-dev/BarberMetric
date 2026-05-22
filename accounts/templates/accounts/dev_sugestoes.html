@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sugestões — Dev Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#04040a; --bg-card:#0a0a14; --bg-card2:#0f0f1c; --bg-row:#0d0d1a;
+      --p:#6366F1; --p2:#8B5CF6;
+      --emerald:#10B981; --amber:#F59E0B;
+      --text:#F0F0F8; --text-2:#C0C0D8; --text-dim:#7070A0;
+      --border:#1a1a2e; --border-2:#252540;
+      --r:12px; --r2:8px; --font:'Outfit',system-ui,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.9rem 1.75rem;
+      background:rgba(4,4,10,.92);border-bottom:1px solid var(--border);
+      backdrop-filter:blur(12px);
+    }
+    .topbar-left{display:flex;align-items:center;gap:1rem}
+    .topbar-title{font-size:1rem;font-weight:800;letter-spacing:-.3px}
+    .topbar-badge{
+      font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:99px;
+      background:rgba(99,102,241,.15);color:#A5B4FC;border:1px solid rgba(99,102,241,.3);
+      text-transform:uppercase;letter-spacing:.5px;
+    }
+    .back-link{
+      display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--text-dim);
+      padding:.4rem .75rem;border-radius:var(--r2);border:1px solid var(--border-2);
+      transition:all .18s;
+    }
+    .back-link:hover{color:var(--text);border-color:var(--p)}
+
+    .content{max-width:860px;margin:0 auto;padding:2rem 1.25rem}
+
+    .stats-row{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+    .stat-card{
+      flex:1;min-width:140px;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);
+      padding:1rem 1.25rem;
+    }
+    .stat-label{font-size:.7rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem}
+    .stat-value{font-size:1.8rem;font-weight:800}
+
+    .section-title{font-size:.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1rem}
+
+    .empty{
+      text-align:center;padding:3rem;background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--r);color:var(--text-dim);font-size:.9rem;
+    }
+
+    .sugestao-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);
+      padding:1.25rem 1.5rem;margin-bottom:.75rem;
+      transition:border-color .18s;
+    }
+    .sugestao-card:hover{border-color:var(--border-2)}
+    .sugestao-card.nova{border-left:3px solid var(--p)}
+
+    .sugestao-meta{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap}
+    .sugestao-nome{font-weight:700;font-size:.95rem}
+    .sugestao-email{font-size:.78rem;color:var(--text-dim)}
+    .sugestao-data{font-size:.75rem;color:var(--text-dim);margin-left:auto}
+    .badge-nova{
+      font-size:.65rem;font-weight:800;padding:.15rem .45rem;border-radius:99px;
+      background:rgba(99,102,241,.2);color:#A5B4FC;border:1px solid rgba(99,102,241,.4);
+      text-transform:uppercase;letter-spacing:.4px;
+    }
+    .sugestao-texto{
+      font-size:.9rem;color:var(--text-2);line-height:1.6;
+      background:var(--bg-card2);border-radius:var(--r2);padding:.85rem 1rem;
+      border:1px solid var(--border);white-space:pre-wrap;
+    }
+
+    /* POPUP */
+    .popup-overlay{
+      display:none;position:fixed;inset:0;z-index:999;
+      background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+      align-items:center;justify-content:center;
+    }
+    .popup-overlay.visible{display:flex}
+    .popup{
+      background:var(--bg-card);border:1px solid rgba(99,102,241,.4);border-radius:16px;
+      padding:2rem 2.25rem;max-width:380px;width:90%;text-align:center;
+      box-shadow:0 0 60px rgba(99,102,241,.25);
+      animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+    .popup-icon{
+      width:64px;height:64px;border-radius:50%;margin:0 auto 1rem;
+      background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.2));
+      border:1.5px solid rgba(99,102,241,.4);
+      display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+    }
+    .popup-count{
+      font-size:2.5rem;font-weight:800;
+      background:linear-gradient(135deg,#6366F1,#A78BFA);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:.25rem;
+    }
+    .popup-label{font-size:.95rem;color:var(--text-2);margin-bottom:1.5rem;line-height:1.5}
+    .popup-btn{
+      display:inline-flex;align-items:center;gap:.5rem;
+      padding:.75rem 1.5rem;border-radius:var(--r2);border:none;cursor:pointer;
+      background:linear-gradient(135deg,#6366F1,#8B5CF6);
+      color:#fff;font-size:.9rem;font-weight:700;font-family:var(--font);
+      transition:all .2s;
+    }
+    .popup-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.35)}
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="{% url 'dev_admin' %}" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dev Panel
+      </a>
+      <div class="topbar-title">Sugestões de Melhoria</div>
+      <div class="topbar-badge">{{ sugestoes|length }} total</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ sugestoes|length }}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Todas as sugestões</div>
+
+    {% if sugestoes %}
+      {% for s in sugestoes %}
+      <div class="sugestao-card">
+        <div class="sugestao-meta">
+          <div class="sugestao-nome">{{ s.nome }}</div>
+          {% if s.email %}<div class="sugestao-email">{{ s.email }}</div>{% endif %}
+          <div class="sugestao-data">{{ s.criado_em|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div class="sugestao-texto">{{ s.sugestao }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">Nenhuma sugestão ainda. Quando os usuários enviarem, aparecem aqui.</div>
+    {% endif %}
+
+  </div>
+
+  <!-- Popup de novas sugestões -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup">
+      <div class="popup-icon">💡</div>
+      <div class="popup-count" id="popupCount">0</div>
+      <div class="popup-label">nova{{ '' }} sugestão{{ '' }} chegou enquanto<br>você estava fora!</div>
+      <button class="popup-btn" onclick="verNovas()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+        Ver agora
+      </button>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var POLL_MS = 30000; // checa a cada 30s
+    var overlay = document.getElementById('popupOverlay');
+    var countEl = document.getElementById('popupCount');
+
+    function poll(){
+      fetch("{% url 'dev_sugestoes_novas' %}")
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.count > 0) {
+            countEl.textContent = d.count;
+            var txt = d.count === 1
+              ? 'nova sugestão chegou!'
+              : 'novas sugestões chegaram!';
+            document.querySelector('.popup-label').textContent = d.count + ' ' + txt;
+            overlay.classList.add('visible');
+          }
+        })
+        .catch(function(){});
+    }
+
+    function verNovas(){
+      overlay.classList.remove('visible');
+      window.location.reload();
+    }
+
+    window.verNovas = verNovas;
+
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) overlay.classList.remove('visible');
+    });
+
+    // começa a fazer polling após 30s
+    setInterval(poll, POLL_MS);
+  })();
+  </script>
+</body>
+</html>

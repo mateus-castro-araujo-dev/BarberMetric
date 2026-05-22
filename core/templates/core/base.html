@@ -378,10 +378,10 @@
             <div style="font-size:.62rem;font-weight:700;color:#C4B5FD;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem">Max</div>
             <div style="font-size:1rem;font-weight:800;color:#F0F0F8;margin-bottom:.6rem">R$34,90<br><span style="font-size:.65rem;font-weight:400;color:#7070A0">/mês</span></div>
             <div style="font-size:.7rem;color:#7070A0;line-height:1.7;text-align:left">
-              <div>1.000 clientes</div>
-              <div>20 barbeiros</div>
-              <div>20 serviços</div>
-              <div>20 produtos</div>
+              <div>500 clientes</div>
+              <div>8 barbeiros</div>
+              <div>10 serviços</div>
+              <div>10 produtos</div>
             </div>
           </div>
         </div>
@@ -482,7 +482,7 @@
             {% if plano == 'max' or plano == 'ativo' %}<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#1E1E32;border:1px solid rgba(139,92,246,.4);border-radius:999px;font-size:.58rem;font-weight:700;color:#C4B5FD;padding:.15rem .5rem;white-space:nowrap">Plano atual</div>{% endif %}
             <div style="font-size:.65rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Max</div>
             <div style="font-size:1.5rem;font-weight:800;color:#F0F0F8;letter-spacing:-1px;line-height:1">R$34<span style="font-size:.75rem;font-weight:400;color:#7070A0">,90/mês</span></div>
-            <div style="font-size:.72rem;color:#7070A0;margin:.55rem 0 .8rem;line-height:1.5">20 barbeiros · 1000 clientes · 20 serviços</div>
+            <div style="font-size:.72rem;color:#7070A0;margin:.55rem 0 .8rem;line-height:1.5">8 barbeiros · 500 clientes · 10 serviços</div>
             {% if plano != 'max' and plano != 'ativo' %}
             <a href="{% url 'pagamento' %}?plano=max" style="display:block;text-align:center;padding:.6rem;border-radius:10px;background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;font-weight:700;font-size:.82rem;text-decoration:none">
               Assinar Max

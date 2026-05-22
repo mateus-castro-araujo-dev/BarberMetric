@@ -1023,8 +1023,8 @@ def dev_inspecionar(request, barbearia_id):
     limites = {
         'trial':    {'barbeiros': 1,  'clientes': 10,   'servicos': 4,  'produtos': 4},
         'pro':      {'barbeiros': 2,  'clientes': 100,  'servicos': 6,  'produtos': 6},
-        'max':      {'barbeiros': 20, 'clientes': 1000, 'servicos': 20, 'produtos': 20},
-        'ativo':    {'barbeiros': 20, 'clientes': 1000, 'servicos': 20, 'produtos': 20},
+        'max':      {'barbeiros': 8, 'clientes': 500, 'servicos': 10, 'produtos': 10},
+        'ativo':    {'barbeiros': 8, 'clientes': 500, 'servicos': 10, 'produtos': 10},
         'suspenso': {'barbeiros': 1,  'clientes': 10,   'servicos': 4,  'produtos': 4},
     }
     lim = limites.get(b.plano, limites['trial'])

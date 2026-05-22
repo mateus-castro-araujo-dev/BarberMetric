@@ -610,41 +610,17 @@ def gerar_pagamento_cartao(request):
         status_sub = data.get('status', '')
         payment_id = sub_id  # usa o ID da assinatura como referência
 
-        # Verifica se a primeira cobrança foi realmente aprovada
-        # Aguarda até 3 tentativas pois o Asaas pode demorar para registrar o pagamento
-        aprovado = False
-        if sub_id:
-            for tentativa in range(3):
+        # Assinatura ACTIVE = cartão aceito pelo Asaas
+        # O webhook PAYMENT_RECEIVED/OVERDUE cuidará da confirmação/suspensão
+        aprovado = status_sub == 'ACTIVE'
+        if not aprovado:
+            # Assinatura não foi criada com sucesso — cancela e retorna erro
+            if sub_id:
                 try:
-                    if tentativa > 0:
-                        time.sleep(3)
-                    resp_pag = http_requests.get(
-                        f'{base}/subscriptions/{sub_id}/payments',
-                        headers=headers,
-                        timeout=15,
-                    )
-                    if resp_pag.ok:
-                        plist = resp_pag.json().get('data', [])
-                        if plist:
-                            primeiro_status = plist[0].get('status', '')
-                            aprovado = primeiro_status in ('RECEIVED', 'CONFIRMED')
-                            if not aprovado and primeiro_status in ('PAYMENT_REJECTED', 'DECLINED', 'REFUNDED'):
-                                # Cancela assinatura inválida
-                                try:
-                                    http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
-                                except Exception:
-                                    pass
-                                return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
-                            if plist:
-                                break  # Pagamento encontrado, sai do loop
-                        # Lista vazia — tenta novamente
-                    else:
-                        break
+                    http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
                 except Exception:
-                    break
-            if not aprovado:
-                # Usa status da assinatura como fallback
-                aprovado = status_sub == 'ACTIVE'
+                    pass
+            return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
 
     else:
         # 2b. Cobrança avulsa (sem recorrência)

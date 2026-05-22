@@ -380,7 +380,7 @@ def gerar_pagamento_pix(request):
 
     api_key = getattr(django_settings, 'ASAAS_API_KEY', '')
     if not api_key:
-        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'}, status=503)
+        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'})
 
     try:
         barbearia = request.user.barbearia
@@ -414,7 +414,7 @@ def gerar_pagamento_pix(request):
     # 1. Obter ou criar cliente no Asaas
     customer_id, erro_cliente = _asaas_get_or_create_customer(api_key, barbearia)
     if not customer_id:
-        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'}, status=502)
+        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'})
 
     # 2. Criar cobrança PIX
     due_date = (timezone.now() + timezone.timedelta(days=1)).strftime('%Y-%m-%d')
@@ -432,17 +432,17 @@ def gerar_pagamento_pix(request):
         try:
             data = resp.json()
         except Exception:
-            return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
+            return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'})
         if not resp.ok:
             erros = data.get('errors', [])
             detalhe = erros[0].get('description', str(data)) if erros else str(data)
-            return JsonResponse({'ok': False, 'erro': f'Erro {resp.status_code}: {detalhe}'}, status=502)
+            return JsonResponse({'ok': False, 'erro': f'Erro {resp.status_code}: {detalhe}'})
     except http_requests.RequestException as e:
-        return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
+        return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'})
 
     payment_id = str(data.get('id', ''))
     if not payment_id:
-        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'}, status=502)
+        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'})
 
     # 3. Obter QR code PIX
     qr_code = ''
@@ -488,7 +488,7 @@ def gerar_pagamento_cartao(request):
 
     api_key = getattr(django_settings, 'ASAAS_API_KEY', '')
     if not api_key:
-        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'}, status=503)
+        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'})
 
     try:
         barbearia = request.user.barbearia
@@ -537,7 +537,7 @@ def gerar_pagamento_cartao(request):
     # 1. Obter ou criar cliente
     customer_id, erro_cliente = _asaas_get_or_create_customer(api_key, barbearia)
     if not customer_id:
-        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'}, status=502)
+        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'})
 
     try:
         cpf_barbearia = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
@@ -598,13 +598,13 @@ def gerar_pagamento_cartao(request):
             try:
                 data = resp.json()
             except Exception:
-                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
+                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'})
             if not resp.ok:
                 erros = data.get('errors', [])
                 detalhe = erros[0].get('description', str(data)) if erros else str(data)
-                return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
+                return JsonResponse({'ok': False, 'erro': detalhe})
         except http_requests.RequestException as e:
-            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
+            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'})
 
         sub_id     = str(data.get('id', ''))
         status_sub = data.get('status', '')
@@ -620,7 +620,7 @@ def gerar_pagamento_cartao(request):
                     http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
                 except Exception:
                     pass
-            return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
+            return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'})
 
     else:
         # 2b. Cobrança avulsa (sem recorrência)
@@ -641,20 +641,20 @@ def gerar_pagamento_cartao(request):
             try:
                 data = resp.json()
             except Exception:
-                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
+                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'})
             if not resp.ok:
                 erros = data.get('errors', [])
                 detalhe = erros[0].get('description', str(data)) if erros else str(data)
-                return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
+                return JsonResponse({'ok': False, 'erro': detalhe})
         except http_requests.RequestException as e:
-            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
+            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'})
 
         payment_id   = str(data.get('id', ''))
         status_asaas = data.get('status', '')
         aprovado     = status_asaas in ('RECEIVED', 'CONFIRMED')
 
     if not payment_id:
-        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'}, status=502)
+        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'})
 
     status_interno = 'approved' if aprovado else 'pending'
 
@@ -878,7 +878,7 @@ def webhook_mp(request):
 
     token = getattr(django_settings, 'MP_ACCESS_TOKEN', '')
     if not token:
-        return JsonResponse({'ok': False}, status=503)
+        return JsonResponse({'ok': False})
 
     try:
         resp = http_requests.get(
@@ -887,10 +887,10 @@ def webhook_mp(request):
             timeout=10,
         )
         if not resp.ok:
-            return JsonResponse({'ok': False}, status=502)
+            return JsonResponse({'ok': False})
         data = resp.json()
     except Exception:
-        return JsonResponse({'ok': False}, status=502)
+        return JsonResponse({'ok': False})
 
     status = data.get('status')
     ext_ref = data.get('external_reference')

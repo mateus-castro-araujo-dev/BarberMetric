@@ -103,6 +103,10 @@ class Barbearia(models.Model):
     # Redefinição de senha
     token_reset_senha = models.CharField(max_length=64, null=True, blank=True)
     token_reset_expira = models.DateTimeField(null=True, blank=True)
+    # Assinatura Asaas
+    asaas_sub_id = models.CharField(max_length=100, null=True, blank=True, help_text='ID da assinatura recorrente no Asaas')
+    asaas_customer_id = models.CharField(max_length=100, null=True, blank=True, help_text='ID do cliente no Asaas')
+    proxima_cobranca = models.DateField(null=True, blank=True, help_text='Data da próxima cobrança mensal')
 
     class Meta:
         verbose_name = 'Barbearia'
@@ -155,7 +159,7 @@ class Barbearia(models.Model):
     def limites(self):
         """Retorna dicionário com os limites do plano atual."""
         if self.plano in (self.PLANO_MAX, self.PLANO_ATIVO):
-            return {'clientes_nome': 1000, 'barbeiros': 20, 'servicos': 20, 'produtos': 20}
+            return {'clientes_nome': 500, 'barbeiros': 8, 'servicos': 10, 'produtos': 10}
         if self.plano == self.PLANO_PRO:
             return {'clientes_nome': 100, 'barbeiros': 2, 'servicos': 6, 'produtos': 6}
         # trial

@@ -22,4 +22,5 @@ urlpatterns = [
     path('pagamento/gerar-cartao/', views.gerar_pagamento_cartao, name='gerar_pagamento_cartao'),
     path('pagamento/status-mp/<str:payment_id>/', views.verificar_status_mp, name='verificar_status_mp'),
     path('pagamento/webhook-mp/', views.webhook_mp, name='webhook_mp'),
+    path('pagamento/webhook-asaas/', views.webhook_asaas, name='webhook_asaas'),
 ]

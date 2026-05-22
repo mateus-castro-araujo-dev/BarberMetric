@@ -507,16 +507,16 @@ def gerar_pagamento_cartao(request):
         plano_escolhido = 'pro'
 
     # Dados do cartão
-    holder_name = body.get('holder_name', '').strip()
-    card_number = re.sub(r'\D', '', body.get('card_number', ''))
-    expiry_month = body.get('expiry_month', '').strip()
-    expiry_year = body.get('expiry_year', '').strip()
-    ccv = body.get('ccv', '').strip()
-    cpf_cartao = re.sub(r'\D', '', body.get('cpf', ''))
-    cep = re.sub(r'\D', '', body.get('cep', ''))
-    numero_end = body.get('numero_endereco', 'S/N').strip()
-    installments = int(body.get('installments', 1))
-    remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1')).split(',')[0].strip()
+    holder_name    = body.get('holder_name', '').strip()
+    card_number    = re.sub(r'\D', '', body.get('card_number', ''))
+    expiry_month   = body.get('expiry_month', '').strip()
+    expiry_year    = body.get('expiry_year', '').strip()
+    ccv            = body.get('ccv', '').strip()
+    cpf_cartao     = re.sub(r'\D', '', body.get('cpf', ''))
+    cep            = re.sub(r'\D', '', body.get('cep', ''))
+    numero_end     = body.get('numero_endereco', 'S/N').strip()
+    recorrente     = bool(body.get('recorrente', False))
+    remote_ip      = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1')).split(',')[0].strip()
 
     if not all([holder_name, card_number, expiry_month, expiry_year, ccv]):
         return JsonResponse({'ok': False, 'erro': 'Preencha todos os dados do cartão.'}, status=400)
@@ -530,7 +530,7 @@ def gerar_pagamento_cartao(request):
 
     barbearia.pagamentos_mp.filter(status='pending').update(status='cancelled')
 
-    base = _asaas_base(api_key)
+    base    = _asaas_base(api_key)
     headers = _asaas_headers(api_key)
 
     # 1. Obter ou criar cliente
@@ -538,8 +538,6 @@ def gerar_pagamento_cartao(request):
     if not customer_id:
         return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'}, status=502)
 
-    # 2. Criar cobrança com cartão
-    due_date = timezone.now().strftime('%Y-%m-%d')
     try:
         cpf_barbearia = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
     except Exception:
@@ -548,55 +546,105 @@ def gerar_pagamento_cartao(request):
     nome_completo = f"{barbearia.user.first_name or ''} {barbearia.user.last_name or ''}".strip() or barbearia.nome
     telefone = re.sub(r'\D', '', getattr(barbearia, 'telefone', '') or '')
 
-    payload = {
-        'customer': customer_id,
-        'billingType': 'CREDIT_CARD',
-        'value': valor,
-        'dueDate': due_date,
-        'description': f'Barber Metric — Plano {descricao_plano}',
-        'externalReference': f'barbearia-{barbearia.pk}-{plano_escolhido}',
-        'installmentCount': installments if installments > 1 else None,
-        'installmentValue': round(valor / installments, 2) if installments > 1 else None,
-        'creditCard': {
-            'holderName': holder_name,
-            'number': card_number,
-            'expiryMonth': expiry_month,
-            'expiryYear': expiry_year,
-            'ccv': ccv,
-        },
-        'creditCardHolderInfo': {
-            'name': nome_completo,
-            'email': barbearia.user.email,
-            'cpfCnpj': cpf_cartao or cpf_barbearia,
-            'postalCode': cep or '01310100',
-            'addressNumber': numero_end,
-            'phone': telefone or '11999999999',
-        },
-        'remoteIp': remote_ip,
+    card_data = {
+        'holderName': holder_name,
+        'number': card_number,
+        'expiryMonth': expiry_month,
+        'expiryYear': expiry_year,
+        'ccv': ccv,
     }
-    # Remove campos None
-    payload = {k: v for k, v in payload.items() if v is not None}
+    holder_info = {
+        'name': nome_completo,
+        'email': barbearia.user.email,
+        'cpfCnpj': cpf_cartao or cpf_barbearia,
+        'postalCode': cep or '01310100',
+        'addressNumber': numero_end,
+        'phone': telefone or '11999999999',
+    }
+    due_date = timezone.now().strftime('%Y-%m-%d')
 
-    try:
-        resp = http_requests.post(f'{base}/payments', json=payload, headers=headers, timeout=20)
+    payment_id   = ''
+    status_asaas = ''
+    sub_id       = ''
+
+    if recorrente:
+        # 2a. Criar assinatura recorrente mensal
+        # Cancela assinatura anterior se existir
+        if barbearia.asaas_sub_id:
+            try:
+                http_requests.delete(
+                    f'{base}/subscriptions/{barbearia.asaas_sub_id}',
+                    headers=headers, timeout=10,
+                )
+            except Exception:
+                pass
+
+        payload_sub = {
+            'customer': customer_id,
+            'billingType': 'CREDIT_CARD',
+            'value': valor,
+            'nextDueDate': due_date,
+            'cycle': 'MONTHLY',
+            'description': f'Barber Metric — Plano {descricao_plano} (Mensal)',
+            'externalReference': f'barbearia-{barbearia.pk}-{plano_escolhido}',
+            'creditCard': card_data,
+            'creditCardHolderInfo': holder_info,
+            'remoteIp': remote_ip,
+        }
+
         try:
-            data = resp.json()
-        except Exception:
-            return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
-        if not resp.ok:
-            erros = data.get('errors', [])
-            detalhe = erros[0].get('description', str(data)) if erros else str(data)
-            return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
-    except http_requests.RequestException as e:
-        return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
+            resp = http_requests.post(f'{base}/subscriptions', json=payload_sub, headers=headers, timeout=20)
+            try:
+                data = resp.json()
+            except Exception:
+                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
+            if not resp.ok:
+                erros = data.get('errors', [])
+                detalhe = erros[0].get('description', str(data)) if erros else str(data)
+                return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
+        except http_requests.RequestException as e:
+            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
 
-    payment_id = str(data.get('id', ''))
-    status_asaas = data.get('status', '')
+        sub_id     = str(data.get('id', ''))
+        status_sub = data.get('status', '')
+        payment_id = sub_id  # usa o ID da assinatura como referência
+        aprovado   = status_sub in ('ACTIVE',)
+        # Assinatura ativa = aprovado; aguarda webhook para confirmar primeira cobrança
+
+    else:
+        # 2b. Cobrança avulsa (sem recorrência)
+        payload = {
+            'customer': customer_id,
+            'billingType': 'CREDIT_CARD',
+            'value': valor,
+            'dueDate': due_date,
+            'description': f'Barber Metric — Plano {descricao_plano}',
+            'externalReference': f'barbearia-{barbearia.pk}-{plano_escolhido}',
+            'creditCard': card_data,
+            'creditCardHolderInfo': holder_info,
+            'remoteIp': remote_ip,
+        }
+
+        try:
+            resp = http_requests.post(f'{base}/payments', json=payload, headers=headers, timeout=20)
+            try:
+                data = resp.json()
+            except Exception:
+                return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
+            if not resp.ok:
+                erros = data.get('errors', [])
+                detalhe = erros[0].get('description', str(data)) if erros else str(data)
+                return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
+        except http_requests.RequestException as e:
+            return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
+
+        payment_id   = str(data.get('id', ''))
+        status_asaas = data.get('status', '')
+        aprovado     = status_asaas in ('RECEIVED', 'CONFIRMED')
 
     if not payment_id:
         return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'}, status=502)
 
-    aprovado = status_asaas in ('RECEIVED', 'CONFIRMED')
     status_interno = 'approved' if aprovado else 'pending'
 
     PagamentoMP.objects.create(
@@ -609,18 +657,27 @@ def gerar_pagamento_cartao(request):
         valor=valor,
     )
 
-    if aprovado:
+    if aprovado or recorrente:
         novo_plano = Barbearia.PLANO_MAX if plano_escolhido == 'max' else Barbearia.PLANO_PRO
+        update_fields = ['plano', 'ativo', 'asaas_customer_id']
         barbearia.plano = novo_plano
         barbearia.ativo = True
-        barbearia.save(update_fields=['plano', 'ativo'])
+        barbearia.asaas_customer_id = customer_id
+        if sub_id:
+            barbearia.asaas_sub_id = sub_id
+            from datetime import date
+            from dateutil.relativedelta import relativedelta
+            barbearia.proxima_cobranca = date.today() + relativedelta(months=1)
+            update_fields += ['asaas_sub_id', 'proxima_cobranca']
+        barbearia.save(update_fields=update_fields)
 
     return JsonResponse({
         'ok': True,
         'payment_id': payment_id,
         'status': status_interno,
-        'aprovado': aprovado,
-        'pendente': not aprovado,
+        'aprovado': aprovado or recorrente,
+        'recorrente': recorrente,
+        'pendente': not aprovado and not recorrente,
     })
 
 
@@ -673,6 +730,97 @@ def verificar_status_mp(request, payment_id):
         'status': pag.status,
         'aprovado': pag.status == 'approved',
     })
+
+
+@csrf_exempt
+def webhook_asaas(request):
+    """Webhook do Asaas — processa pagamentos e renovações de assinatura."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'ok': False}, status=400)
+
+    event = body.get('event', '')
+    payment_data = body.get('payment', {})
+    subscription_data = body.get('subscription', {})
+
+    # Eventos de pagamento confirmado
+    if event in ('PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'):
+        payment_id = payment_data.get('id', '')
+        subscription_id = payment_data.get('subscription', '')
+        external_ref = payment_data.get('externalReference', '')
+        status_asaas = payment_data.get('status', '')
+
+        # Tenta encontrar a barbearia pelo externalReference ou subscription
+        barbearia = None
+        if external_ref and external_ref.startswith('barbearia-'):
+            try:
+                pk = int(external_ref.split('-')[1])
+                barbearia = Barbearia.objects.get(pk=pk)
+            except Exception:
+                pass
+
+        if not barbearia and subscription_id:
+            try:
+                barbearia = Barbearia.objects.get(asaas_sub_id=subscription_id)
+            except Exception:
+                pass
+
+        if barbearia:
+            # Renova acesso
+            plano_ref = external_ref.split('-')[-1] if external_ref else 'pro'
+            novo_plano = Barbearia.PLANO_MAX if plano_ref == 'max' else Barbearia.PLANO_PRO
+            from datetime import date
+            from dateutil.relativedelta import relativedelta
+            update_fields = ['plano', 'ativo', 'proxima_cobranca']
+            barbearia.plano = novo_plano
+            barbearia.ativo = True
+            barbearia.proxima_cobranca = date.today() + relativedelta(months=1)
+            barbearia.save(update_fields=update_fields)
+
+            # Registra pagamento
+            if payment_id:
+                PagamentoMP.objects.get_or_create(
+                    payment_id=payment_id,
+                    defaults={
+                        'barbearia': barbearia,
+                        'status': 'approved',
+                        'plano_escolhido': plano_ref if plano_ref in ('pro', 'max') else 'pro',
+                        'valor': payment_data.get('value', 0),
+                    }
+                )
+
+    # Eventos de pagamento em atraso — suspende conta
+    elif event in ('PAYMENT_OVERDUE',):
+        subscription_id = payment_data.get('subscription', '')
+        external_ref = payment_data.get('externalReference', '')
+
+        barbearia = None
+        if subscription_id:
+            try:
+                barbearia = Barbearia.objects.get(asaas_sub_id=subscription_id)
+            except Exception:
+                pass
+
+        if barbearia:
+            barbearia.plano = Barbearia.PLANO_SUSPENSO
+            barbearia.save(update_fields=['plano'])
+
+    # Assinatura cancelada
+    elif event in ('SUBSCRIPTION_DELETED',):
+        sub_id = subscription_data.get('id', '')
+        if sub_id:
+            try:
+                barbearia = Barbearia.objects.get(asaas_sub_id=sub_id)
+                barbearia.asaas_sub_id = None
+                barbearia.save(update_fields=['asaas_sub_id'])
+            except Exception:
+                pass
+
+    return JsonResponse({'ok': True})
 
 
 @csrf_exempt

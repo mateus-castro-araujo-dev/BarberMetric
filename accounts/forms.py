@@ -18,7 +18,7 @@ ESTADOS_BR = [
 class CadastroForm(forms.Form):
     nome_barbearia = forms.CharField(
         max_length=100,
-        widget=forms.TextInput(attrs={'placeholder': 'Ex: Barbearia do João', 'class': 'form-control'}),
+        widget=forms.TextInput(attrs={'placeholder': 'BarberMetric', 'class': 'form-control'}),
         label='Nome da Barbearia',
     )
     nome_proprietario = forms.CharField(

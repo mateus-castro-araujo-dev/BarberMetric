@@ -558,8 +558,13 @@
           headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
           body: JSON.stringify({ plano: planoSelecionado }),
         })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (!r.ok && r.status === 403) { window.location.href = '/login/'; return null; }
+          if (!r.ok && r.status === 302) { window.location.href = '/login/'; return null; }
+          return r.json();
+        })
         .then(function (data) {
+          if (!data) return;
           if (!data.ok) {
             alert('Erro: ' + (data.erro || 'Tente novamente.'));
             btnGerar.disabled = false;
@@ -575,8 +580,8 @@
           qrContainer.classList.add('visible');
           iniciarPollingPix();
         })
-        .catch(function () {
-          alert('Erro de conexão. Tente novamente.');
+        .catch(function (e) {
+          alert('Erro de conexão: ' + (e && e.message ? e.message : 'Tente novamente.'));
           btnGerar.disabled = false;
           if (btnLabel) btnLabel.textContent = 'Gerar QR Code PIX — ' + precos[planoSelecionado];
         });
@@ -734,91 +739,37 @@
       return ok;
     }
 
-    /* Inicializa SDK do MP — com carregamento dinâmico se necessário */
-    function initMpSDK(callback) {
-      if (typeof MercadoPago !== 'undefined') {
-        try {
-          if (!mpSDK) mpSDK = new MercadoPago('{{ mp_public_key }}', { locale: 'pt-BR' });
-          if (callback) callback(null);
-        } catch(e) {
-          if (callback) callback(e);
-        }
-        return;
-      }
-      var s = document.createElement('script');
-      s.src = 'https://sdk.mercadopago.com/js/v2';
-      s.onload = function () {
-        try {
-          mpSDK = new MercadoPago('{{ mp_public_key }}', { locale: 'pt-BR' });
-          if (callback) callback(null);
-        } catch(e) {
-          if (callback) callback(e);
-        }
-      };
-      s.onerror = function () {
-        if (callback) callback(new Error('SDK não carregou (verifique o console do navegador)'));
-      };
-      document.head.appendChild(s);
-    }
-    initMpSDK(null);
-
     /* ════════════════════════════════
-       Submissão do cartão
+       Submissão do cartão (Asaas)
     ════════════════════════════════ */
     btnPagarCartao.addEventListener('click', function () {
       cardPayError.classList.remove('visible');
-
       if (!validarCampos()) return;
-
       btnPagarCartao.disabled = true;
-      document.getElementById('btnPagarLabel').textContent = 'Carregando...';
-
-      initMpSDK(function (err) {
-        if (err) {
-          // Tenta detectar se é falta de internet
-          var msg = err.message || 'Erro ao inicializar pagamento com cartão.';
-          mostrarErroCartao(msg);
-          btnPagarCartao.disabled = false;
-          document.getElementById('btnPagarLabel').textContent = 'Tentar novamente';
-          return;
-        }
-        processarCartao();
-      });
+      document.getElementById('btnPagarLabel').textContent = 'Processando...';
+      processarCartao();
     });
 
     function processarCartao() {
-      document.getElementById('btnPagarLabel').textContent = 'Processando...';
-
       var exp = cardExpiry.value.split('/');
       var expMonth = exp[0];
       var expYear  = '20' + exp[1];
       var num      = cardNumber.value.replace(/\s/g, '');
+      var cpf      = cardCpf.value.replace(/\D/g, '');
 
-      mpSDK.createCardToken({
-        cardNumber:      num,
-        cardholderName:  cardName.value.trim(),
-        cardExpirationMonth: expMonth,
-        cardExpirationYear:  expYear,
-        securityCode:    cardCvv.value,
-        identificationType: 'CPF',
-        identificationNumber: cardCpf.value.replace(/\D/g,''),
-      })
-      .then(function (tokenResult) {
-        if (!tokenResult || !tokenResult.id) {
-          throw new Error('Token inválido retornado pelo MP');
-        }
-        return fetch('/pagamento/gerar-cartao/', {
-          method: 'POST',
-          headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            card_token:        tokenResult.id,
-            plano:             planoSelecionado,
-            installments:      1,
-            payment_method_id: detectPaymentMethodId(num),
-            email:             '{{ barbearia.user.email }}',
-            cpf:               cardCpf.value.replace(/\D/g,''),
-          }),
-        });
+      fetch('/pagamento/gerar-cartao/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          plano:          planoSelecionado,
+          holder_name:    cardName.value.trim(),
+          card_number:    num,
+          expiry_month:   expMonth,
+          expiry_year:    expYear,
+          ccv:            cardCvv.value,
+          cpf:            cpf,
+          installments:   1,
+        }),
       })
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -837,8 +788,8 @@
         }
       })
       .catch(function (err) {
-        console.error('MP Erro:', err);
-        var msg = err.message || JSON.stringify(err) || 'Erro desconhecido';
+        console.error('Asaas Erro:', err);
+        var msg = err.message || 'Erro desconhecido';
         mostrarErroCartao(msg);
         btnPagarCartao.disabled = false;
         document.getElementById('btnPagarLabel').textContent = 'Pagar com Cartão — ' + precos[planoSelecionado] + ' (' + nomes[planoSelecionado] + ')';

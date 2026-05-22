@@ -475,13 +475,13 @@ def gerar_pagamento_pix(request):
 
 @login_required(login_url='/login/')
 def gerar_pagamento_cartao(request):
-    """Cria um pagamento com cartão de crédito/débito via token do Mercado Pago."""
+    """Cria um pagamento com cartão de crédito via Asaas."""
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'erro': 'Método inválido'}, status=405)
 
-    token = getattr(django_settings, 'MP_ACCESS_TOKEN', '')
-    if not token:
-        return JsonResponse({'ok': False, 'erro': 'Mercado Pago não configurado.'}, status=503)
+    api_key = getattr(django_settings, 'ASAAS_API_KEY', '')
+    if not api_key:
+        return JsonResponse({'ok': False, 'erro': 'Gateway de pagamento não configurado.'}, status=503)
 
     try:
         barbearia = request.user.barbearia
@@ -496,18 +496,24 @@ def gerar_pagamento_cartao(request):
     except Exception:
         return JsonResponse({'ok': False, 'erro': 'JSON inválido.'}, status=400)
 
-    card_token = body.get('card_token', '').strip()
     plano_escolhido = body.get('plano', 'pro')
-    installments = int(body.get('installments', 1))
-    payment_method_id = body.get('payment_method_id', '')
-    issuer_id = body.get('issuer_id', '')
-    email_pagador = body.get('email', barbearia.user.email)
-    cpf = body.get('cpf', '').strip().replace('.', '').replace('-', '')
-
-    if not card_token:
-        return JsonResponse({'ok': False, 'erro': 'Token de cartão inválido.'}, status=400)
     if plano_escolhido not in ('pro', 'max'):
         plano_escolhido = 'pro'
+
+    # Dados do cartão
+    holder_name = body.get('holder_name', '').strip()
+    card_number = re.sub(r'\D', '', body.get('card_number', ''))
+    expiry_month = body.get('expiry_month', '').strip()
+    expiry_year = body.get('expiry_year', '').strip()
+    ccv = body.get('ccv', '').strip()
+    cpf_cartao = re.sub(r'\D', '', body.get('cpf', ''))
+    cep = re.sub(r'\D', '', body.get('cep', ''))
+    numero_end = body.get('numero_endereco', 'S/N').strip()
+    installments = int(body.get('installments', 1))
+    remote_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1')).split(',')[0].strip()
+
+    if not all([holder_name, card_number, expiry_month, expiry_year, ccv]):
+        return JsonResponse({'ok': False, 'erro': 'Preencha todos os dados do cartão.'}, status=400)
 
     if plano_escolhido == 'max':
         valor = float(getattr(django_settings, 'ASSINATURA_VALOR_MAX', 34.90))
@@ -516,71 +522,85 @@ def gerar_pagamento_cartao(request):
         valor = float(getattr(django_settings, 'ASSINATURA_VALOR_PRO', 14.90))
         descricao_plano = 'Pro'
 
-    # Cancela pagamentos pendentes antigos
     barbearia.pagamentos_mp.filter(status='pending').update(status='cancelled')
 
+    base = _asaas_base(api_key)
+    headers = _asaas_headers(api_key)
+
+    # 1. Obter ou criar cliente
+    customer_id, erro_cliente = _asaas_get_or_create_customer(api_key, barbearia)
+    if not customer_id:
+        return JsonResponse({'ok': False, 'erro': f'Erro ao criar cliente: {erro_cliente}'}, status=502)
+
+    # 2. Criar cobrança com cartão
+    due_date = timezone.now().strftime('%Y-%m-%d')
+    try:
+        cpf_barbearia = re.sub(r'\D', '', barbearia.cpf_proprietario or '')
+    except Exception:
+        cpf_barbearia = ''
+
+    nome_completo = f"{barbearia.user.first_name or ''} {barbearia.user.last_name or ''}".strip() or barbearia.nome
+    telefone = re.sub(r'\D', '', getattr(barbearia, 'telefone', '') or '')
+
     payload = {
-        'transaction_amount': valor,
-        'token': card_token,
-        'description': f'Barber Metric — Plano {descricao_plano} — {barbearia.nome}',
-        'installments': installments,
-        'payment_method_id': payment_method_id,
-        'payer': {
-            'email': email_pagador,
-            'identification': {'type': 'CPF', 'number': cpf} if cpf else {},
+        'customer': customer_id,
+        'billingType': 'CREDIT_CARD',
+        'value': valor,
+        'dueDate': due_date,
+        'description': f'Barber Metric — Plano {descricao_plano}',
+        'externalReference': f'barbearia-{barbearia.pk}-{plano_escolhido}',
+        'installmentCount': installments if installments > 1 else None,
+        'installmentValue': round(valor / installments, 2) if installments > 1 else None,
+        'creditCard': {
+            'holderName': holder_name,
+            'number': card_number,
+            'expiryMonth': expiry_month,
+            'expiryYear': expiry_year,
+            'ccv': ccv,
         },
-        'external_reference': str(barbearia.pk),
-        'metadata': {'barbearia_id': barbearia.pk, 'barbearia_nome': barbearia.nome},
+        'creditCardHolderInfo': {
+            'name': nome_completo,
+            'email': barbearia.user.email,
+            'cpfCnpj': cpf_cartao or cpf_barbearia,
+            'postalCode': cep or '01310100',
+            'addressNumber': numero_end,
+            'phone': telefone or '11999999999',
+        },
+        'remoteIp': remote_ip,
     }
-    if issuer_id:
-        payload['issuer_id'] = issuer_id
-
-    site_url = getattr(django_settings, 'SITE_URL', '').rstrip('/')
-    if site_url:
-        payload['notification_url'] = site_url + '/pagamento/webhook-mp/'
-
-    headers = {
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': f'card-{barbearia.pk}-{int(timezone.now().timestamp())}',
-    }
+    # Remove campos None
+    payload = {k: v for k, v in payload.items() if v is not None}
 
     try:
-        resp = http_requests.post(
-            f'{MP_API_BASE}/v1/payments',
-            json=payload,
-            headers=headers,
-            timeout=20,
-        )
+        resp = http_requests.post(f'{base}/payments', json=payload, headers=headers, timeout=20)
         data = resp.json()
         if not resp.ok:
-            detalhe = data.get('message') or data.get('error') or str(data)
-            causa = data.get('cause', [])
-            if causa:
-                detalhe += ' | ' + '; '.join(str(c) for c in causa)
-            return JsonResponse({'ok': False, 'erro': f'MP {resp.status_code}: {detalhe}'}, status=502)
+            erros = data.get('errors', [])
+            detalhe = erros[0].get('description', str(data)) if erros else str(data)
+            return JsonResponse({'ok': False, 'erro': detalhe}, status=502)
     except http_requests.RequestException as e:
         return JsonResponse({'ok': False, 'erro': f'Erro de conexão: {str(e)}'}, status=502)
 
     payment_id = str(data.get('id', ''))
-    status = data.get('status', 'pending')
-    status_detail = data.get('status_detail', '')
+    status_asaas = data.get('status', '')
 
     if not payment_id:
-        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do Mercado Pago.'}, status=502)
+        return JsonResponse({'ok': False, 'erro': 'Resposta inválida do gateway.'}, status=502)
+
+    aprovado = status_asaas in ('RECEIVED', 'CONFIRMED')
+    status_interno = 'approved' if aprovado else 'pending'
 
     PagamentoMP.objects.create(
         barbearia=barbearia,
         payment_id=payment_id,
-        status=status,
+        status=status_interno,
         plano_escolhido=plano_escolhido,
         qr_code='',
         qr_code_base64='',
         valor=valor,
     )
 
-    # Se aprovado na hora (cartão de débito costuma aprovar imediatamente)
-    if status == 'approved':
+    if aprovado:
         novo_plano = Barbearia.PLANO_MAX if plano_escolhido == 'max' else Barbearia.PLANO_PRO
         barbearia.plano = novo_plano
         barbearia.ativo = True
@@ -589,10 +609,9 @@ def gerar_pagamento_cartao(request):
     return JsonResponse({
         'ok': True,
         'payment_id': payment_id,
-        'status': status,
-        'status_detail': status_detail,
-        'aprovado': status == 'approved',
-        'pendente': status in ('in_process', 'pending', 'authorized'),
+        'status': status_interno,
+        'aprovado': aprovado,
+        'pendente': not aprovado,
     })
 
 

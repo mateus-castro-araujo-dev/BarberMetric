@@ -19,7 +19,7 @@
   <form method="POST" style="padding:0 1.25rem 1.25rem;display:flex;flex-direction:column;gap:.75rem">
     {% csrf_token %}
     <input type="hidden" name="action" value="add">
-    <div style="display:grid;grid-template-columns:1fr 130px;gap:.65rem">
+    <div style="display:grid;grid-template-columns:1fr 130px;gap:.65rem" class="form-grid-nome-preco">
       <div>
         <label style="margin-top: 10px;" class="form-label">Nome do Produto *</label>
         <input type="text" name="nome" class="form-input" placeholder="Ex: Pomada Modeladora" required>

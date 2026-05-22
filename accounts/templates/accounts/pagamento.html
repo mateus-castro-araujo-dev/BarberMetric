@@ -259,6 +259,20 @@
 <body>
   <div class="pay-wrap">
 
+    <!-- Botão fechar -->
+    <a href="{% url 'home' %}" style="
+      position:fixed;top:1.1rem;right:1.1rem;
+      width:38px;height:38px;border-radius:50%;
+      background:var(--bg-card-2);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      color:var(--text-dim);text-decoration:none;
+      transition:all .18s;z-index:99;
+    " title="Voltar para atendimentos"
+      onmouseover="this.style.borderColor='var(--border-2)';this.style.color='var(--text)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </a>
+
     <!-- Logo -->
     <div class="pay-logo">
       <div class="pay-logo-inner">

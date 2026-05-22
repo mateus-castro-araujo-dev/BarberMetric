@@ -1174,9 +1174,9 @@
       <div class="pricing-divider"></div>
       <div class="pricing-features">
         <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Clientes avulsos ilimitados</div>
-        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 1.000 clientes com nome</div>
-        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 20 barbeiros</div>
-        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 20 serviços e 20 produtos</div>
+        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 500 clientes com nome</div>
+        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 8 barbeiros</div>
+        <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Até 10 serviços e 10 produtos</div>
         <div class="pricing-feature"><span class="pricing-feature-icon">✓</span>Relatórios, gráficos e fila</div>
       </div>
       <a href="{% if user.is_authenticated %}{% url 'pagamento' %}?plano=max{% else %}{% url 'cadastro' %}?plano=max{% endif %}" class="pricing-cta">

@@ -137,30 +137,6 @@
         {% csrf_token %}
         <input type="hidden" name="plano_intencao" value="{{ plano_intencao }}">
 
-        <div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M3 9l2-5h14l2 5"/><path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="M9 21V13h6v8"/></svg>Dados da Barbearia</div>
-        <div class="form-group">
-          <label>Nome da Barbearia *</label>
-          <input type="text" name="nome_barbearia" value="{{ form.nome_barbearia.value|default:'' }}" placeholder="Ex: Barbearia do João" required>
-          {% if form.nome_barbearia.errors %}<div class="error-msg">{{ form.nome_barbearia.errors.0 }}</div>{% endif %}
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cidade *</label>
-            <input type="text" name="cidade" value="{{ form.cidade.value|default:'' }}" placeholder="Sua cidade" required>
-            {% if form.cidade.errors %}<div class="error-msg">{{ form.cidade.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="form-group">
-            <label>Estado *</label>
-            <select name="estado">
-              {% for val, label in form.fields.estado.choices %}
-              <option value="{{ val }}" {% if form.estado.value == val %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-            {% if form.estado.errors %}<div class="error-msg">{{ form.estado.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="section-title">Dados do Proprietário</div>
         <div class="form-group">
           <label>Nome Completo *</label>
           <input type="text" name="nome_proprietario" value="{{ form.nome_proprietario.value|default:'' }}" placeholder="Seu nome completo" required>
@@ -168,14 +144,14 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>CPF *</label>
-            <input type="text" name="cpf" id="cpf-input" value="{{ form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14" required>
-            {% if form.cpf.errors %}<div class="error-msg">{{ form.cpf.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="form-group">
             <label>Telefone *</label>
             <input type="text" name="telefone" id="tel-input" value="{{ form.telefone.value|default:'' }}" placeholder="(11) 99999-9999" required>
             {% if form.telefone.errors %}<div class="error-msg">{{ form.telefone.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label>CPF *</label>
+            <input type="text" name="cpf" id="cpf-input" value="{{ form.cpf.value|default:'' }}" placeholder="000.000.000-00" maxlength="14" required>
+            {% if form.cpf.errors %}<div class="error-msg">{{ form.cpf.errors.0 }}</div>{% endif %}
           </div>
         </div>
         <div class="form-group">
@@ -183,8 +159,6 @@
           <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="seu@email.com" required>
           {% if form.email.errors %}<div class="error-msg">{{ form.email.errors.0 }}</div>{% endif %}
         </div>
-
-        <div class="section-title">Segurança</div>
         <div class="form-row">
           <div class="form-group">
             <label>Senha *</label>

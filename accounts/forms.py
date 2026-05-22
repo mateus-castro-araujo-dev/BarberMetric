@@ -16,35 +16,22 @@ ESTADOS_BR = [
 
 
 class CadastroForm(forms.Form):
-    nome_barbearia = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'placeholder': 'BarberMetric', 'class': 'form-control'}),
-        label='Nome da Barbearia',
-    )
     nome_proprietario = forms.CharField(
         max_length=150,
         widget=forms.TextInput(attrs={'placeholder': 'Seu nome completo', 'class': 'form-control'}),
-        label='Nome do Proprietário',
-    )
-    cpf = forms.CharField(
-        max_length=14,
-        widget=forms.TextInput(attrs={'placeholder': '000.000.000-00', 'class': 'form-control', 'id': 'id_cpf'}),
-        label='CPF do Proprietário',
-    )
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'placeholder': 'seu@email.com', 'class': 'form-control'}),
+        label='Nome',
     )
     telefone = forms.CharField(
         max_length=20,
         widget=forms.TextInput(attrs={'placeholder': '(11) 99999-9999', 'class': 'form-control', 'id': 'id_telefone'}),
     )
-    cidade = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'placeholder': 'Sua cidade', 'class': 'form-control'}),
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'placeholder': 'seu@email.com', 'class': 'form-control'}),
     )
-    estado = forms.ChoiceField(
-        choices=ESTADOS_BR,
-        widget=forms.Select(attrs={'class': 'form-control'}),
+    cpf = forms.CharField(
+        max_length=14,
+        widget=forms.TextInput(attrs={'placeholder': '000.000.000-00', 'class': 'form-control', 'id': 'id_cpf'}),
+        label='CPF',
     )
     senha = forms.CharField(
         min_length=8,

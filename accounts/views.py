@@ -69,11 +69,11 @@ def cadastro(request):
 
             barbearia = Barbearia(
                 user=user,
-                nome=d['nome_barbearia'],
+                nome='BarberMetric',
                 telefone=d['telefone'],
                 telefone_normalizado=normalizar_telefone(d['telefone']),
-                cidade=d['cidade'],
-                estado=d['estado'],
+                cidade='',
+                estado='',
             )
             barbearia.cpf_proprietario = d['cpf']
             barbearia.cpf_hash = hash_cpf(d['cpf'])

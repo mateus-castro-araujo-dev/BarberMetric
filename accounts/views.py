@@ -1139,6 +1139,13 @@ def dev_sugestoes(request):
     return render(request, 'accounts/dev_sugestoes.html', {'sugestoes': sugestoes})
 
 
+def dev_sugestao_apagar(request, pk):
+    if not _verificar_dev(request):
+        return redirect('dev_admin_login')
+    Sugestao.objects.filter(pk=pk).delete()
+    return redirect('dev_sugestoes')
+
+
 def dev_sugestoes_novas(request):
     """Endpoint de polling — retorna quantidade de sugestões não lidas."""
     if not _verificar_dev(request):

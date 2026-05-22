@@ -20,6 +20,7 @@ urlpatterns = [
     path('dev/logout/', views.dev_admin_logout, name='dev_admin_logout'),
     path('dev/sugestoes/', views.dev_sugestoes, name='dev_sugestoes'),
     path('dev/sugestoes/novas/', views.dev_sugestoes_novas, name='dev_sugestoes_novas'),
+    path('dev/sugestoes/<int:pk>/apagar/', views.dev_sugestao_apagar, name='dev_sugestao_apagar'),
     path('pagamento/gerar-pix/', views.gerar_pagamento_pix, name='gerar_pagamento_pix'),
     path('pagamento/gerar-cartao/', views.gerar_pagamento_cartao, name='gerar_pagamento_cartao'),
     path('pagamento/status-mp/<str:payment_id>/', views.verificar_status_mp, name='verificar_status_mp'),

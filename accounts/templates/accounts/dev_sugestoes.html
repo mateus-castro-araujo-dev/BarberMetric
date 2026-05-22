@@ -148,6 +148,10 @@
           <div class="sugestao-nome">{{ s.nome }}</div>
           {% if s.email %}<div class="sugestao-email">{{ s.email }}</div>{% endif %}
           <div class="sugestao-data">{{ s.criado_em|date:"d/m/Y H:i" }}</div>
+          <form method="post" action="{% url 'dev_sugestao_apagar' s.id %}" onsubmit="return confirm('Apagar esta sugestão?')" style="margin-left:auto">
+            {% csrf_token %}
+            <button type="submit" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.3);color:#fb7185;border-radius:6px;padding:.25rem .6rem;cursor:pointer;font-size:.75rem;font-weight:700;font-family:var(--font);transition:all .15s" onmouseover="this.style.background='rgba(244,63,94,.2)'" onmouseout="this.style.background='rgba(244,63,94,.1)'">Apagar</button>
+          </form>
         </div>
         <div class="sugestao-texto">{{ s.sugestao }}</div>
       </div>

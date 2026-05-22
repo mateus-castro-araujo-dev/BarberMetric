@@ -240,6 +240,16 @@
       <div class="stat-label">Solicitações pend.</div>
       <div class="stat-value amber">{{ stats.solicitacoes_pendentes }}</div>
     </div>
+    <a href="{% url 'dev_sugestoes' %}" style="text-decoration:none">
+      <div class="stat-card" style="cursor:pointer;border-color:{% if stats.sugestoes_novas %}rgba(99,102,241,.5){% else %}var(--border){% endif %};position:relative;transition:border-color .2s">
+        {% if stats.sugestoes_novas %}
+        <div style="position:absolute;top:.75rem;right:.75rem;background:#6366F1;color:#fff;font-size:.65rem;font-weight:800;padding:.15rem .5rem;border-radius:999px">{{ stats.sugestoes_novas }} nova{{ stats.sugestoes_novas|pluralize }}</div>
+        {% endif %}
+        <div class="stat-label">💡 Sugestões</div>
+        <div class="stat-value purple">{{ stats.sugestoes_total }}</div>
+        <div class="stat-desc">Ver sugestões dos usuários →</div>
+      </div>
+    </a>
   </div>
 
   <!-- TABLE -->
@@ -490,6 +500,35 @@
       applyFilters();
     });
   });
+</script>
+
+<!-- Popup novas sugestões -->
+<div id="popupOverlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:#0a0a14;border:1px solid rgba(99,102,241,.4);border-radius:16px;padding:2rem 2.25rem;max-width:360px;width:90%;text-align:center;box-shadow:0 0 60px rgba(99,102,241,.25);animation:popIn .3s cubic-bezier(.34,1.56,.64,1)">
+    <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 1rem;background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.2));border:1.5px solid rgba(99,102,241,.4);display:flex;align-items:center;justify-content:center;font-size:1.8rem">💡</div>
+    <div id="popupCount" style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#6366F1,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem">0</div>
+    <div id="popupLabel" style="font-size:.95rem;color:#C0C0D8;margin-bottom:1.5rem;line-height:1.5">nova sugestão chegou!</div>
+    <a href="{% url 'dev_sugestoes' %}" style="display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:.9rem;font-weight:700;text-decoration:none">Ver sugestões →</a>
+  </div>
+</div>
+<style>@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}</style>
+<script>
+(function(){
+  var overlay = document.getElementById('popupOverlay');
+  function poll(){
+    fetch("{% url 'dev_sugestoes_novas' %}")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.count > 0){
+          document.getElementById('popupCount').textContent = d.count;
+          document.getElementById('popupLabel').textContent = d.count === 1 ? 'nova sugestão chegou!' : 'novas sugestões chegaram!';
+          overlay.style.display = 'flex';
+        }
+      }).catch(function(){});
+  }
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.style.display='none'; });
+  setInterval(poll, 30000);
+})();
 </script>
 </body>
 </html>

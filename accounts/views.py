@@ -1120,6 +1120,8 @@ def dev_admin(request):
         'inativos': barbearias.filter(ativo=False).count(),
         'email_nao_verificado': barbearias.filter(email_verificado=False).count(),
         'solicitacoes_pendentes': solicitacoes_pendentes,
+        'sugestoes_total': Sugestao.objects.count(),
+        'sugestoes_novas': Sugestao.objects.filter(lida=False).count(),
     }
 
     return render(request, 'accounts/dev_admin.html', {

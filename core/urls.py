@@ -26,4 +26,6 @@ urlpatterns = [
     path('fila/toggle/', views.toggle_aberto, name='toggle_aberto'),
     path('fila/toggle-horarios/', views.toggle_mostrar_horarios, name='toggle_mostrar_horarios'),
     path('fila/horarios/', views.salvar_horarios, name='salvar_horarios'),
+    path('suporte/', views.suporte, name='suporte'),
+    path('suporte/enviar/', views.suporte_enviar, name='suporte_enviar'),
 ]

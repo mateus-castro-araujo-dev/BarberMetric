@@ -315,15 +315,11 @@
 
       {% if mp_configurado %}
 
-      <!-- Abas -->
+      <!-- Apenas PIX -->
       <div class="pay-tabs">
-        <button class="pay-tab active" id="tabPix" onclick="trocarAba('pix')">
+        <button class="pay-tab active" id="tabPix" style="cursor:default">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h1v1h-1z M16 14h1v1h-1z M14 16h1v1h-1z M16 16h3v3h-3z"/></svg>
           PIX
-        </button>
-        <button class="pay-tab" id="tabCartao" onclick="trocarAba('cartao')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-          Cartão de Crédito
         </button>
       </div>
 
@@ -380,108 +376,6 @@
         </div>
       </div>
 
-      <!-- ── Painel Cartão ── -->
-      <div class="pay-tab-panel" id="panelCartao">
-
-        <!-- Status aprovado cartão -->
-        <div class="status-aprovado" id="statusAprovadoCartao">
-          <div class="status-aprovado-icon">✅</div>
-          <h3>Pagamento aprovado!</h3>
-          <p>Sua assinatura foi ativada. Redirecionando...</p>
-        </div>
-
-        <!-- Erro cartão -->
-        <div class="card-pay-error" id="cardPayError">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span id="cardPayErrorMsg">Cartão recusado. Verifique os dados e tente novamente.</span>
-        </div>
-
-        <div id="cardFormWrap">
-          <!-- Preview visual -->
-          <div class="card-preview" id="cardPreview" style="margin-bottom:1.1rem">
-            <span class="card-brand" id="cardBrandPreview">•••</span>
-            <div class="card-preview-number" id="previewNumber">•••• •••• •••• ••••</div>
-            <div class="card-preview-row">
-              <div>
-                <div class="card-preview-label">Titular</div>
-                <div class="card-preview-value" id="previewName">SEU NOME</div>
-              </div>
-              <div style="text-align:right">
-                <div class="card-preview-label">Validade</div>
-                <div class="card-preview-value" id="previewExpiry">MM/AA</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-form" id="cardForm">
-            <!-- Número do cartão -->
-            <div class="card-field" id="fieldNumero">
-              <label for="cardNumber">Número do Cartão</label>
-              <input class="card-input" type="tel" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number">
-              <div class="card-field-error">Número de cartão inválido</div>
-            </div>
-
-            <!-- Nome -->
-            <div class="card-field" id="fieldNome">
-              <label for="cardName">Nome no Cartão</label>
-              <input class="card-input" type="text" id="cardName" placeholder="Como aparece no cartão" autocomplete="cc-name" style="text-transform:uppercase">
-              <div class="card-field-error">Informe o nome como está no cartão</div>
-            </div>
-
-            <!-- Validade + CVV -->
-            <div class="card-field-group">
-              <div class="card-field" id="fieldValidade">
-                <label for="cardExpiry">Validade</label>
-                <input class="card-input" type="tel" id="cardExpiry" placeholder="MM/AA" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
-                <div class="card-field-error">Data inválida</div>
-              </div>
-              <div class="card-field" id="fieldCvv">
-                <label for="cardCvv">CVV</label>
-                <input class="card-input" type="tel" id="cardCvv" placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
-                <div class="card-field-error">CVV inválido</div>
-              </div>
-            </div>
-
-            <!-- CPF -->
-            <div class="card-field" id="fieldCpf">
-              <label for="cardCpf">CPF do Titular</label>
-              <input class="card-input" type="tel" id="cardCpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" autocomplete="off">
-              <div class="card-field-error">CPF inválido</div>
-            </div>
-
-            <!-- Cobrança recorrente -->
-            <label style="display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;padding:.85rem 1rem;background:rgba(99,102,241,.06);border:1.5px solid rgba(99,102,241,.25);border-radius:10px;margin-top:.25rem">
-              <input type="checkbox" id="checkRecorrente" style="margin-top:2px;accent-color:#6366F1;width:16px;height:16px;flex-shrink:0">
-              <span style="font-size:.85rem;color:var(--text-muted);line-height:1.45">
-                <strong style="color:var(--text);display:block;margin-bottom:.2rem">Autorizar cobrança mensal automática</strong>
-                Salvar este cartão para renovação automática todo mês. Você pode cancelar quando quiser.
-              </span>
-            </label>
-
-            <!-- Botão pagar -->
-            <button class="btn-pagar" id="btnPagarCartao" type="button">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span id="btnPagarLabel">Pagar com Cartão — R$14,90 (Pro)</span>
-            </button>
-
-            <!-- Bandeiras aceitas + segurança -->
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-top:.2rem">
-              <div class="card-brands">
-                <div class="card-brand-icon">VISA</div>
-                <div class="card-brand-icon">MSTR</div>
-                <div class="card-brand-icon">ELO</div>
-                <div class="card-brand-icon">AMEX</div>
-                <div class="card-brand-icon">HIPER</div>
-              </div>
-              <div class="seguranca-row">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                Criptografado pelo Mercado Pago
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
 
       {% else %}
       <!-- MP não configurado -->

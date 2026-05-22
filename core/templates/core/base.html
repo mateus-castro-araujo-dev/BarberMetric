@@ -136,6 +136,11 @@
       </a>
 
       <div class="nav-section-label">Outros</div>
+      <a href="{% url 'suporte' %}" class="nav-link {% if request.resolver_match.url_name == 'suporte' %}active{% endif %}">
+        <span class="nav-icon">{% include 'core/_icon.html' with name='help' %}</span>
+        <span class="nav-text">Suporte</span>
+        <span class="nav-bar"></span>
+      </a>
       <a href="{% url 'logout' %}" class="nav-link danger">
         <span class="nav-icon">{% include 'core/_icon.html' with name='logout' %}</span>
         <span class="nav-text">Sair</span>

@@ -649,3 +649,20 @@ def api_status(request, slug):
         'espera': status.espera,
         'mensagem': msg,
     })
+
+
+@login_required(login_url=LOGIN_URL)
+def suporte(request):
+    return render(request, 'core/suporte.html')
+
+
+@login_required(login_url=LOGIN_URL)
+@require_POST
+def suporte_enviar(request):
+    nome = request.POST.get('nome', '').strip()
+    sugestao = request.POST.get('sugestao', '').strip()
+    if nome and sugestao:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info('Sugestão de %s (%s): %s', nome, request.user.email, sugestao)
+    return JsonResponse({'ok': True})

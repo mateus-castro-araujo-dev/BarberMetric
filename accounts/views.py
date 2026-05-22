@@ -608,8 +608,34 @@ def gerar_pagamento_cartao(request):
         sub_id     = str(data.get('id', ''))
         status_sub = data.get('status', '')
         payment_id = sub_id  # usa o ID da assinatura como referência
-        aprovado   = status_sub in ('ACTIVE',)
-        # Assinatura ativa = aprovado; aguarda webhook para confirmar primeira cobrança
+
+        # Verifica se a primeira cobrança foi realmente aprovada
+        aprovado = False
+        if sub_id:
+            try:
+                resp_pag = http_requests.get(
+                    f'{base}/subscriptions/{sub_id}/payments',
+                    headers=headers,
+                    timeout=10,
+                )
+                if resp_pag.ok:
+                    plist = resp_pag.json().get('data', [])
+                    if plist:
+                        primeiro_status = plist[0].get('status', '')
+                        aprovado = primeiro_status in ('RECEIVED', 'CONFIRMED')
+                        if not aprovado and primeiro_status in ('PAYMENT_REJECTED', 'DECLINED', 'REFUNDED'):
+                            # Cancela assinatura inválida
+                            try:
+                                http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
+                            except Exception:
+                                pass
+                            return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
+                    else:
+                        # Sem pagamentos listados ainda — confia no status da assinatura
+                        aprovado = status_sub == 'ACTIVE'
+            except Exception:
+                # Falha ao buscar pagamentos — usa status da assinatura como fallback
+                aprovado = status_sub == 'ACTIVE'
 
     else:
         # 2b. Cobrança avulsa (sem recorrência)
@@ -657,7 +683,7 @@ def gerar_pagamento_cartao(request):
         valor=valor,
     )
 
-    if aprovado or recorrente:
+    if aprovado:
         novo_plano = Barbearia.PLANO_MAX if plano_escolhido == 'max' else Barbearia.PLANO_PRO
         update_fields = ['plano', 'ativo', 'asaas_customer_id']
         barbearia.plano = novo_plano
@@ -675,9 +701,9 @@ def gerar_pagamento_cartao(request):
         'ok': True,
         'payment_id': payment_id,
         'status': status_interno,
-        'aprovado': aprovado or recorrente,
+        'aprovado': aprovado,
         'recorrente': recorrente,
-        'pendente': not aprovado and not recorrente,
+        'pendente': not aprovado,
     })
 
 

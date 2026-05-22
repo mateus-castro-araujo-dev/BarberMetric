@@ -315,10 +315,10 @@ def _asaas_headers(api_key):
     return {'access_token': api_key, 'Content-Type': 'application/json'}
 
 def _asaas_base(api_key):
-    """Usa sandbox se a chave começa com $ (chave de teste do Asaas)."""
-    if api_key.startswith('$aact_'):
-        return ASAAS_SANDBOX_BASE
-    return ASAAS_API_BASE
+    """Usa produção se a chave contém '_prod_', caso contrário sandbox."""
+    if '_prod_' in api_key:
+        return ASAAS_API_BASE
+    return ASAAS_SANDBOX_BASE
 
 def _asaas_get_or_create_customer(api_key, barbearia):
     """Busca cliente existente pelo CPF ou cria novo."""
@@ -360,7 +360,10 @@ def _asaas_get_or_create_customer(api_key, barbearia):
 
     try:
         resp = http_requests.post(f'{base}/customers', json=payload, headers=headers, timeout=10)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception:
+            return None, f'Resposta inválida do gateway (HTTP {resp.status_code})'
         if resp.ok:
             return data['id'], None
         return None, data.get('errors', [{'description': str(data)}])[0].get('description', str(data))
@@ -425,7 +428,10 @@ def gerar_pagamento_pix(request):
 
     try:
         resp = http_requests.post(f'{base}/payments', json=payload_cobranca, headers=headers, timeout=15)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception:
+            return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
         if not resp.ok:
             erros = data.get('errors', [])
             detalhe = erros[0].get('description', str(data)) if erros else str(data)
@@ -573,7 +579,10 @@ def gerar_pagamento_cartao(request):
 
     try:
         resp = http_requests.post(f'{base}/payments', json=payload, headers=headers, timeout=20)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception:
+            return JsonResponse({'ok': False, 'erro': f'Resposta inválida do gateway (HTTP {resp.status_code}).'}, status=502)
         if not resp.ok:
             erros = data.get('errors', [])
             detalhe = erros[0].get('description', str(data)) if erros else str(data)

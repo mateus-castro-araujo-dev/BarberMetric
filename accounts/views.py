@@ -1,5 +1,6 @@
 ﻿import json
 import re
+import time
 import hashlib
 import hmac
 import requests as http_requests
@@ -610,31 +611,39 @@ def gerar_pagamento_cartao(request):
         payment_id = sub_id  # usa o ID da assinatura como referência
 
         # Verifica se a primeira cobrança foi realmente aprovada
+        # Aguarda até 3 tentativas pois o Asaas pode demorar para registrar o pagamento
         aprovado = False
         if sub_id:
-            try:
-                resp_pag = http_requests.get(
-                    f'{base}/subscriptions/{sub_id}/payments',
-                    headers=headers,
-                    timeout=10,
-                )
-                if resp_pag.ok:
-                    plist = resp_pag.json().get('data', [])
-                    if plist:
-                        primeiro_status = plist[0].get('status', '')
-                        aprovado = primeiro_status in ('RECEIVED', 'CONFIRMED')
-                        if not aprovado and primeiro_status in ('PAYMENT_REJECTED', 'DECLINED', 'REFUNDED'):
-                            # Cancela assinatura inválida
-                            try:
-                                http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
-                            except Exception:
-                                pass
-                            return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
+            for tentativa in range(3):
+                try:
+                    if tentativa > 0:
+                        time.sleep(3)
+                    resp_pag = http_requests.get(
+                        f'{base}/subscriptions/{sub_id}/payments',
+                        headers=headers,
+                        timeout=15,
+                    )
+                    if resp_pag.ok:
+                        plist = resp_pag.json().get('data', [])
+                        if plist:
+                            primeiro_status = plist[0].get('status', '')
+                            aprovado = primeiro_status in ('RECEIVED', 'CONFIRMED')
+                            if not aprovado and primeiro_status in ('PAYMENT_REJECTED', 'DECLINED', 'REFUNDED'):
+                                # Cancela assinatura inválida
+                                try:
+                                    http_requests.delete(f'{base}/subscriptions/{sub_id}', headers=headers, timeout=10)
+                                except Exception:
+                                    pass
+                                return JsonResponse({'ok': False, 'erro': 'Cartão recusado. Verifique os dados ou tente outro cartão.'}, status=402)
+                            if plist:
+                                break  # Pagamento encontrado, sai do loop
+                        # Lista vazia — tenta novamente
                     else:
-                        # Sem pagamentos listados ainda — confia no status da assinatura
-                        aprovado = status_sub == 'ACTIVE'
-            except Exception:
-                # Falha ao buscar pagamentos — usa status da assinatura como fallback
+                        break
+                except Exception:
+                    break
+            if not aprovado:
+                # Usa status da assinatura como fallback
                 aprovado = status_sub == 'ACTIVE'
 
     else:
